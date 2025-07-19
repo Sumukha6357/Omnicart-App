@@ -1,0 +1,55 @@
+services:
+  backend:
+    build:
+      context: ./omnicart-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/omnicart_db
+      SPRING_DATASOURCE_USERNAME: sumuka
+      SPRING_DATASOURCE_PASSWORD: root
+      # Uncomment if using Redis
+      # SPRING_REDIS_HOST: redis
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./omnicart-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: omnicart_db
+      POSTGRES_USER: sumuka
+      POSTGRES_PASSWORD: root
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+volumes:
+  pgdata:
+
+networks:
+  app-network:
+    driver: bridge

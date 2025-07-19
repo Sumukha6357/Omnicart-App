@@ -1,0 +1,10 @@
+# Ignore IntelliJ files
+.idea/
+*.iml
+
+# Ignore VS Code settings
+.vscode/
+
+# Ignore build artifacts
+omnicart-backend/target/
+omnicart-frontend/node_modules/

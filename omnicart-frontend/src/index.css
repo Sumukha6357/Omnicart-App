@@ -1,0 +1,8 @@
+/* index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.dashboard-card {
+  @apply p-6 bg-white rounded-lg shadow hover:shadow-lg text-xl font-medium text-gray-800 hover:text-blue-600 transition;
+}
