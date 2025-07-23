@@ -1,40 +1,42 @@
-// src/api/categoryApi.js
-import axios from "axios"
+import api from "./axios";
 
-const BASE_URL = "http://localhost:8080/api/categories"
+// 🔧 Auth headers helper
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  return {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+};
 
-export const fetchCategories = async (token) => {
-  const response = await axios.get(BASE_URL, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-  return response.data
-}
+// ✅ Fetch all categories
+export const fetchCategories = async () => {
+  const response = await api.get("/api/categories", {
+    headers: getAuthHeaders(),
+  });
+  return response.data;
+};
 
-export const createCategory = async (categoryData, token) => {
-  const response = await axios.post(BASE_URL, categoryData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-  return response.data
-}
+// ✅ Create new category
+export const createCategory = async (categoryData) => {
+  const response = await api.post("/api/categories", categoryData, {
+    headers: getAuthHeaders(),
+  });
+  return response.data;
+};
 
-export const updateCategory = async (categoryId, updatedData, token) => {
-  const response = await axios.put(`${BASE_URL}/${categoryId}`, updatedData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-  return response.data
-}
+// ✅ Update existing category
+export const updateCategory = async (categoryId, updatedData) => {
+  const response = await api.put(`/api/categories/${categoryId}`, updatedData, {
+    headers: getAuthHeaders(),
+  });
+  return response.data;
+};
 
-export const deleteCategory = async (categoryId, token) => {
-  const response = await axios.delete(`${BASE_URL}/${categoryId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-  return response.data
-}
+// ✅ Delete a category
+export const deleteCategory = async (categoryId) => {
+  const response = await api.delete(`/api/categories/${categoryId}`, {
+    headers: getAuthHeaders(),
+  });
+  return response.data;
+};

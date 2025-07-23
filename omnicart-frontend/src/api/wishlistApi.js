@@ -1,46 +1,36 @@
-import axios from "axios";
+// src/api/wishlistApi.js
+import api from './axios';
 
-const BASE_URL = "http://localhost:8080/api/wishlist";
-
-// ✅ Centralized Auth Header using the correct token
-const getAuthHeader = () => {
-  const token = localStorage.getItem("token"); // token stored separately
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
   return {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    Authorization: `Bearer ${token}`,
   };
 };
 
-// ✅ Add item to wishlist
+// ➕ Add to wishlist
 export const addToWishlist = async (userId, productId) => {
-  const response = await axios.post(
-    `${BASE_URL}/${userId}`,
+  const response = await api.post(
+    `/wishlist/${userId}`,
     { productId },
-    getAuthHeader()
+    { headers: getAuthHeaders() }
   );
   return response.data;
 };
 
-// ✅ Remove item from wishlist
+// ➖ Remove from wishlist
 export const removeFromWishlist = async (userId, productId) => {
-  const response = await axios.delete(
-    `${BASE_URL}/${userId}/${productId}`,
-    getAuthHeader()
+  const response = await api.delete(
+    `/wishlist/${userId}/${productId}`,
+    { headers: getAuthHeaders() }
   );
   return response.data;
 };
 
-// ✅ Get all wishlist items for a user
+// 📜 Get user's wishlist
 export const getWishlist = async (userId) => {
-  const token = localStorage.getItem("token"); // fetch token correctly
-  const response = await fetch(`${BASE_URL}/${userId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+  const response = await api.get(`/wishlist/${userId}`, {
+    headers: getAuthHeaders(),
   });
-  if (!response.ok) {
-    throw new Error("Failed to fetch wishlist");
-  }
-  return await response.json();
+  return response.data;
 };

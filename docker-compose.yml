@@ -6,24 +6,52 @@ services:
       - "8080:8080"
     depends_on:
       - db
+      - redis
+    restart: on-failure
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/omnicart_db
-      SPRING_DATASOURCE_USERNAME: sumuka
-      SPRING_DATASOURCE_PASSWORD: root
-      # Uncomment if using Redis
-      # SPRING_REDIS_HOST: redis
+      
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379 
+           
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD}
+      
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      
+      AWS_REGION: ${AWS_REGION}
+      AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME}
+      AWS_S3_ACCESS_KEY: ${AWS_S3_ACCESS_KEY}
+      AWS_S3_SECRET_KEY: ${AWS_S3_SECRET_KEY}
+      AWS_S3_URL_EXPIRY_MS: ${AWS_S3_URL_EXPIRY_MS}
+    
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
-      - app-network
+      - omnicart-net
 
   frontend:
     build:
       context: ./omnicart-frontend
+      args:
+        VITE_BACKEND_URL: http://backend:8080  # correct
     ports:
-      - "3000:3000"
+      - "3000:80"
     depends_on:
       - backend
     networks:
-      - app-network
+      - omnicart-net
+
 
   db:
     image: postgres:15
@@ -34,22 +62,18 @@ services:
       POSTGRES_PASSWORD: root
     volumes:
       - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     networks:
-      - app-network
+      - omnicart-net
 
   redis:
     image: redis:7
     restart: always
-    ports:
-      - "6379:6379"
     networks:
-      - app-network
+      - omnicart-net
 
 volumes:
   pgdata:
 
 networks:
-  app-network:
+  omnicart-net:
     driver: bridge

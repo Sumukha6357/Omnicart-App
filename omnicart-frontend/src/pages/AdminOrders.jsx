@@ -10,6 +10,7 @@ export default function AdminOrders() {
   useEffect(() => {
     dispatch(fetchAllOrders());
   }, [dispatch]);
+console.log("Orders value in component:", orders);
 
   return (
     <AdminLayout>

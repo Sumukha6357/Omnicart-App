@@ -1,54 +1,39 @@
-import axios from "axios";
+// src/api/adminApi.js
+import api from './axios';
 
-const API_BASE = "http://localhost:8080/api/admin";
-const USER_API_BASE = "http://localhost:8080/api/users";
+const ADMIN = '/api/admin';
+const USER = '/api/users';
 
-export const fetchAllUsers = async (token) => {
-  const response = await axios.get(`${API_BASE}/users`, {
+// Optional: Inject token into every request automatically
+const authHeader = () => {
+  const token = localStorage.getItem("token");
+  return {
     headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
-    }
-  });
-  return response.data;
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  };
 };
 
-export const updateUsername = async (userId, newUsername, token) => {
-  const response = await axios.put(
-    `${USER_API_BASE}/${userId}/username`,
-    { name: newUsername },
-    {
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      }
-    }
-  );
-  return response.data;
+// ✅ Admin - Get All Users
+export const fetchAllUsers = async () => {
+  const res = await api.get(`${ADMIN}/users`, authHeader());
+  return res.data;
 };
 
-export const updatePassword = async (userId, newPassword, token) => {
-  const response = await axios.put(
-    `${USER_API_BASE}/${userId}/password`,
-    { password: newPassword },
-    {
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      }
-    }
-  );
-  return response.data;
+// ✅ Update Username
+export const updateUsername = async (userId, newUsername) => {
+  const res = await api.put(`${USER}/${userId}/username`, { name: newUsername }, authHeader());
+  return res.data;
 };
 
-
-export const fetchUsersBySeller = async (sellerId, token) => {
-  const response = await axios.get(`${API_BASE}/users/seller/${sellerId}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
-    }
-  });
-  return response.data;
+// ✅ Update Password
+export const updatePassword = async (userId, newPassword) => {
+  const res = await api.put(`${USER}/${userId}/password`, { password: newPassword }, authHeader());
+  return res.data;
 };
 
+// ✅ Users By Seller
+export const fetchUsersBySeller = async (sellerId) => {
+  const res = await api.get(`${ADMIN}/users/seller/${sellerId}`, authHeader());
+  return res.data;
+};

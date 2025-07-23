@@ -1,44 +1,44 @@
-import axios from "axios"
+// src/api/cartApi.js
+import api from './axios'
 
-const API_BASE = "http://localhost:8080/api/cart"
+// 🔧 Auth headers helper
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+  return {
+    Authorization: `Bearer ${token}`,
+    "X-User-Role": role,
+    "Content-Type": "application/json",
+  };
+};
 
-// Get cart for a user
-export const getCart = async (userId, token) => {
-  const response = await axios.get(`${API_BASE}/${userId}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
-    },
-  })
-  return response.data
-}
+// 🛒 Get cart for a user
+export const getCart = async (userId) => {
+  const response = await api.get(`/api/cart/${userId}`, {
+    headers: getAuthHeaders(),
+  });
+  return response.data;
+};
 
-// Add item to cart for a user
-export const addToCart = async (userId, cartItemRequest, token) => {
-  // cartItemRequest: { productId, quantity }
-  const response = await axios.post(
-    `${API_BASE}/${userId}`,
+// ➕ Add item to cart
+export const addToCart = async (userId, cartItemRequest) => {
+  const response = await api.post(
+    `/api/cart/${userId}`,
     cartItemRequest,
     {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      }
+      headers: getAuthHeaders(),
     }
-  )
-  return response.data
-}
+  );
+  return response.data;
+};
 
-// Remove item from cart for a user
-export const removeFromCart = async (userId, productId, token) => {
-  const response = await axios.delete(
-    `${API_BASE}/${userId}/item/${productId}`,
+// ❌ Remove item from cart
+export const removeFromCart = async (userId, productId) => {
+  const response = await api.delete(
+    `/api/cart/${userId}/item/${productId}`,
     {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      }
+      headers: getAuthHeaders(),
     }
-  )
-  return response.data
-}
+  );
+  return response.data;
+};

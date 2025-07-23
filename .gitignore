@@ -8,3 +8,11 @@
 # Ignore build artifacts
 omnicart-backend/target/
 omnicart-frontend/node_modules/
+
+.env
+target/
+*.iml
+*.class
+.idea/
+.vscode/
+*.log

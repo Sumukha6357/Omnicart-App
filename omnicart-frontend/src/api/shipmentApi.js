@@ -1,43 +1,45 @@
-const BASE_URL = "http://localhost:8080/api/shipments";
+// src/api/shipmentApi.js
+import api from './axios';
 
-// Helper to get the token and build headers
-function getAuthHeaders() {
-  const token = localStorage.getItem("token"); // Or from Redux if you store it there
+// 🔐 Auth headers helper
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
   return {
-    "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
+    "X-User-Role": role,
+    "Content-Type": "application/json",
   };
-}
+};
 
-// ✅ GET - Get shipment by order ID
-export async function getShipmentByOrderId(orderId) {
-  const res = await fetch(`${BASE_URL}/order/${orderId}`, {
-    method: "GET",
+// 📦 Get shipment by order ID
+export const getShipmentByOrderId = async (orderId) => {
+  const response = await api.get(`/api/shipments/order/${orderId}`, {
     headers: getAuthHeaders(),
   });
+  return response.data;
+};
 
-  if (!res.ok) throw new Error("Shipment not found");
-  return await res.json();
-}
+// 🚚 Create a new shipment
+export const createShipment = async (orderId, logisticsPartner) => {
+  const response = await api.post(
+    `/api/shipments/${orderId}?logisticsPartner=${logisticsPartner}`,
+    null, // no body needed
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+  return response.data;
+};
 
-// ✅ POST - Create a shipment
-export async function createShipment(orderId, logisticsPartner) {
-  const res = await fetch(`${BASE_URL}/${orderId}?logisticsPartner=${logisticsPartner}`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-  });
-
-  if (!res.ok) throw new Error("Failed to create shipment");
-  return await res.json();
-}
-
-// ✅ PUT - Update shipment status
-export async function updateShipmentStatus(shipmentId, status) {
-  const res = await fetch(`${BASE_URL}/${shipmentId}?status=${status}`, {
-    method: "PUT",
-    headers: getAuthHeaders(),
-  });
-
-  if (!res.ok) throw new Error("Failed to update shipment status");
-  return await res.json();
-}
+// 🔄 Update shipment status
+export const updateShipmentStatus = async (shipmentId, status) => {
+  const response = await api.put(
+    `/api/shipments/${shipmentId}?status=${status}`,
+    null, // no body needed
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+  return response.data;
+};
