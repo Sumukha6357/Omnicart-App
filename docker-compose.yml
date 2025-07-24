@@ -1,7 +1,9 @@
+version: '3.8'
+
 services:
+
   backend:
-    build:
-      context: ./omnicart-backend
+    image: sumukha6357/omnicart:latest
     ports:
       - "8080:8080"
     depends_on:
@@ -9,15 +11,14 @@ services:
       - redis
     restart: on-failure
     environment:
-      
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-
+      
       SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379 
-           
+      SPRING_REDIS_PORT: 6379
+
       SPRING_MAIL_HOST: ${SPRING_MAIL_HOST}
       SPRING_MAIL_PORT: ${SPRING_MAIL_PORT}
       SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME}
@@ -31,20 +32,18 @@ services:
       AWS_S3_ACCESS_KEY: ${AWS_S3_ACCESS_KEY}
       AWS_S3_SECRET_KEY: ${AWS_S3_SECRET_KEY}
       AWS_S3_URL_EXPIRY_MS: ${AWS_S3_URL_EXPIRY_MS}
-    
+
     healthcheck:
       test: ["CMD-SHELL", "curl --fail http://localhost:8080/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
+
     networks:
       - omnicart-net
 
   frontend:
-    build:
-      context: ./omnicart-frontend
-      args:
-        VITE_BACKEND_URL: http://backend:8080  # correct
+    image: sumukha6357/omnicart-frontend:latest
     ports:
       - "3000:80"
     depends_on:
@@ -52,10 +51,10 @@ services:
     networks:
       - omnicart-net
 
-
   db:
     image: postgres:15
     restart: always
+    container_name: omnicart-db
     environment:
       POSTGRES_DB: omnicart_db
       POSTGRES_USER: sumuka
@@ -68,6 +67,7 @@ services:
   redis:
     image: redis:7
     restart: always
+    container_name: omnicart-redis
     networks:
       - omnicart-net
 
