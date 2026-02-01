@@ -11,7 +11,7 @@ const getAuthHeaders = () => {
 // ➕ Add to wishlist
 export const addToWishlist = async (userId, productId) => {
   const response = await api.post(
-    `/wishlist/${userId}`,
+    `/api/wishlist/${userId}`,
     { productId },
     { headers: getAuthHeaders() }
   );
@@ -21,7 +21,7 @@ export const addToWishlist = async (userId, productId) => {
 // ➖ Remove from wishlist
 export const removeFromWishlist = async (userId, productId) => {
   const response = await api.delete(
-    `/wishlist/${userId}/${productId}`,
+    `/api/wishlist/${userId}/${productId}`,
     { headers: getAuthHeaders() }
   );
   return response.data;
@@ -29,7 +29,7 @@ export const removeFromWishlist = async (userId, productId) => {
 
 // 📜 Get user's wishlist
 export const getWishlist = async (userId) => {
-  const response = await api.get(`/wishlist/${userId}`, {
+  const response = await api.get(`/api/wishlist/${userId}`, {
     headers: getAuthHeaders(),
   });
   return response.data;

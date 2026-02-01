@@ -3,10 +3,13 @@ import api from "./axios";
 // 🔧 Auth headers helper
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
-  return {
-    Authorization: `Bearer ${token}`,
+  const headers = {
     "Content-Type": "application/json",
   };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
 };
 
 // ✅ Fetch all categories

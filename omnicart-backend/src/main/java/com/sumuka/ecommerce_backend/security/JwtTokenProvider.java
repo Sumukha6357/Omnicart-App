@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.UUID;
 
@@ -24,13 +27,8 @@ public class JwtTokenProvider {
 
     @PostConstruct
     public void init() {
-        byte[] decodedSecret = Decoders.BASE64.decode(jwtSecretBase64);
-
-        if (decodedSecret.length < 64) {
-            throw new IllegalArgumentException("JWT secret key must be at least 512 bits (64 bytes) for HS512 algorithm.");
-        }
-
-        this.secretKey = Keys.hmacShaKeyFor(decodedSecret);
+        byte[] keyBytes = decodeOrHashSecret(jwtSecretBase64);
+        this.secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String generateToken(UUID userId, String role) {
@@ -67,5 +65,30 @@ public class JwtTokenProvider {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    private byte[] decodeOrHashSecret(String secret) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalArgumentException("JWT secret is missing.");
+        }
+
+        try {
+            byte[] decoded = Decoders.BASE64.decode(secret);
+            if (decoded.length >= 64) {
+                return decoded;
+            }
+        } catch (IllegalArgumentException ignored) {
+            // Fallback to hashing the raw secret below.
+        }
+
+        return sha512(secret.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private byte[] sha512(byte[] input) {
+        try {
+            return MessageDigest.getInstance("SHA-512").digest(input);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-512 not available", e);
+        }
     }
 }

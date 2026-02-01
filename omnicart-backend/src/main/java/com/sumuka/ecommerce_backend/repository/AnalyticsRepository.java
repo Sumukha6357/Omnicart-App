@@ -10,11 +10,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
-public interface AnalyticsRepository extends JpaRepository<Order, Long> {
+public interface AnalyticsRepository extends JpaRepository<Order, UUID> {
 
     // ✅ Total Revenue
     @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o")
@@ -83,7 +84,7 @@ public interface AnalyticsRepository extends JpaRepository<Order, Long> {
         WHERE o.orderDate BETWEEN :start AND :end
         GROUP BY c.name
     """)
-    List<CategorySalesDTO> calculateSalesByCategory(LocalDate start, LocalDate end);
+    List<CategorySalesDTO> calculateSalesByCategory(LocalDateTime start, LocalDateTime end);
 
     // ✅ Top Products by Revenue (Between Dates)
     @Query("""
@@ -99,5 +100,5 @@ public interface AnalyticsRepository extends JpaRepository<Order, Long> {
         GROUP BY p.name
         ORDER BY SUM(oi.price * oi.quantity) DESC
     """)
-    List<TopProductDto> findTopProductsByRevenue(LocalDate start, LocalDate end);
+    List<TopProductDto> findTopProductsByRevenue(LocalDateTime start, LocalDateTime end);
 }

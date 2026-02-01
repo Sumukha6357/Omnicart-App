@@ -1,9 +1,9 @@
 // src/components/Footer.jsx
 const Footer = () => {
   return (
-    <footer className="bg-gray-100 text-gray-600 text-sm py-4 px-6 mt-auto">
+    <footer className="bg-gray-100 dark:bg-slate-900 text-gray-600 dark:text-slate-300 text-sm py-4 px-6 mt-auto">
       <div className="flex flex-col sm:flex-row justify-between items-center">
-        <p>© {new Date().getFullYear()} OmniCart. All rights reserved.</p>
+        <p>(c) {new Date().getFullYear()} OmniCart. All rights reserved.</p>
         <div className="space-x-4 mt-2 sm:mt-0">
           <a href="/privacy" className="hover:underline">
             Privacy
@@ -21,3 +21,7 @@ const Footer = () => {
 };
 
 export default Footer;
+
+
+
+

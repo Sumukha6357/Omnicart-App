@@ -3,14 +3,19 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { getWishlist, addToWishlist } from "../api/wishlistApi";
 
 export const fetchWishlist = createAsyncThunk("wishlist/fetchWishlist", async (userId) => {
-  return await getWishlist(userId);
+  let serverItems = [];
+  try {
+    serverItems = await getWishlist(userId);
+  } catch (e) {
+    serverItems = [];
+  }
+  return serverItems;
 });
 
 export const addWishlistItem = createAsyncThunk(
   "wishlist/addItem",
-  async ({ userId, productId }, { dispatch }) => {
+  async ({ userId, productId }, { dispatch, getState }) => {
     await addToWishlist(userId, productId);
-    // Refresh wishlist
     dispatch(fetchWishlist(userId));
   }
 );

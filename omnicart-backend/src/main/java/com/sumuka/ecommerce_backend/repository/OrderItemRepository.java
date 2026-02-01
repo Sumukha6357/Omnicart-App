@@ -6,7 +6,7 @@ import com.sumuka.ecommerce_backend.entity.OrderItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,7 +25,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
     GROUP BY p.name
     ORDER BY SUM(oi.price * oi.quantity) DESC
 """)
-    List<TopProductDto> findTopProductsByRevenue(LocalDate start, LocalDate end);
+    List<TopProductDto> findTopProductsByRevenue(LocalDateTime start, LocalDateTime end);
 
 
     @Query("""
@@ -40,6 +40,14 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
     WHERE o.orderDate BETWEEN :start AND :end
     GROUP BY c.name
 """)
-    List<CategorySalesDTO> calculateSalesByCategory(LocalDate start, LocalDate end);
+    List<CategorySalesDTO> calculateSalesByCategory(LocalDateTime start, LocalDateTime end);
+
+    @Query("""
+        SELECT oi.product.id, SUM(oi.quantity)
+        FROM OrderItem oi
+        WHERE oi.product.id IN :productIds
+        GROUP BY oi.product.id
+    """)
+    List<Object[]> findPopularityByProductIds(List<UUID> productIds);
 
 }

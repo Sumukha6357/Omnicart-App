@@ -21,9 +21,10 @@ export const getShipmentByOrderId = async (orderId) => {
 };
 
 // 🚚 Create a new shipment
-export const createShipment = async (orderId, logisticsPartner) => {
+export const createShipment = async (orderId, logisticsPartner, trackingNumber) => {
+  const trackingParam = trackingNumber ? `&trackingNumber=${encodeURIComponent(trackingNumber)}` : "";
   const response = await api.post(
-    `/api/shipments/${orderId}?logisticsPartner=${logisticsPartner}`,
+    `/api/shipments/${orderId}?logisticsPartner=${encodeURIComponent(logisticsPartner)}${trackingParam}`,
     null, // no body needed
     {
       headers: getAuthHeaders(),
@@ -41,5 +42,21 @@ export const updateShipmentStatus = async (shipmentId, status) => {
       headers: getAuthHeaders(),
     }
   );
+  return response.data;
+};
+
+// 📋 Get all shipments (admin)
+export const getAllShipments = async () => {
+  const response = await api.get(`/api/shipments`, {
+    headers: getAuthHeaders(),
+  });
+  return response.data;
+};
+
+// 📦 Get seller shipments
+export const getSellerShipments = async (sellerId) => {
+  const response = await api.get(`/api/shipments/seller/${sellerId}`, {
+    headers: getAuthHeaders(),
+  });
   return response.data;
 };

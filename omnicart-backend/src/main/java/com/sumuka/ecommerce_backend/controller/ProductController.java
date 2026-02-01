@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,14 +25,47 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductResponse>> getAllProducts() {
-        List<ProductResponse> products = productService.getAllProducts();
+    public ResponseEntity<List<ProductResponse>> getAllProducts(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Double minRating,
+            @RequestParam(required = false) String sort
+    ) {
+        boolean noFilters = (search == null || search.isBlank())
+                && (category == null || category.isBlank())
+                && minPrice == null
+                && maxPrice == null
+                && minRating == null
+                && (sort == null || sort.isBlank());
+
+        List<ProductResponse> products = noFilters
+                ? productService.getAllProducts()
+                : productService.getAllProductsFiltered(search, category, minPrice, maxPrice, minRating, sort);
         return ResponseEntity.ok(products);
     }
 
     @GetMapping("/seller/{sellerId}")
-    public ResponseEntity<List<ProductResponse>> getProductsBySeller(@PathVariable UUID sellerId) {
-        List<ProductResponse> products = productService.getProductsBySeller(sellerId);
+    public ResponseEntity<List<ProductResponse>> getProductsBySeller(
+            @PathVariable UUID sellerId,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Double minRating,
+            @RequestParam(required = false) String sort
+    ) {
+        boolean noFilters = (search == null || search.isBlank())
+                && (category == null || category.isBlank())
+                && minPrice == null
+                && maxPrice == null
+                && minRating == null
+                && (sort == null || sort.isBlank());
+
+        List<ProductResponse> products = noFilters
+                ? productService.getProductsBySeller(sellerId)
+                : productService.getProductsBySellerFiltered(sellerId, search, category, minPrice, maxPrice, minRating, sort);
         return ResponseEntity.ok(products);
     }
 

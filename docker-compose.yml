@@ -3,18 +3,27 @@ version: '3.8'
 services:
 
   backend:
-    image: sumukha6357/omnicart:latest
+    build:
+      context: ./omnicart-backend
+      dockerfile: Dockerfile
+    image: sumukha6357/omnicart:local
     ports:
       - "8080:8080"
     depends_on:
       - db
       - redis
     restart: on-failure
+    env_file:
+      - .env.docker
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/omnicart_db
+      SPRING_DATASOURCE_USERNAME: sumuka
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_MAIN_LOG_STARTUP_INFO: "false"
+      LOGGING_LEVEL_ROOT: "WARN"
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_BOOT_AUTOCONFIGURE: "INFO"
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_BOOT_AUTOCONFIGURE_CONDITION: "INFO"
       
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
@@ -33,21 +42,6 @@ services:
       AWS_S3_SECRET_KEY: ${AWS_S3_SECRET_KEY}
       AWS_S3_URL_EXPIRY_MS: ${AWS_S3_URL_EXPIRY_MS}
 
-    healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost:8080/actuator/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-    networks:
-      - omnicart-net
-
-  frontend:
-    image: sumukha6357/omnicart-frontend:latest
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
     networks:
       - omnicart-net
 

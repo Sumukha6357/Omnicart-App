@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/shipments")
@@ -19,8 +21,10 @@ public class ShipmentController {
     private final ShipmentService shipmentService;
 
     @PostMapping("/{orderId}")
-    public Shipment createShipment(@PathVariable UUID orderId, @RequestParam String logisticsPartner) {
-        return shipmentService.createShipment(orderId, logisticsPartner);
+    public Shipment createShipment(@PathVariable UUID orderId,
+                                   @RequestParam String logisticsPartner,
+                                   @RequestParam(required = false) String trackingNumber) {
+        return shipmentService.createShipment(orderId, logisticsPartner, trackingNumber);
     }
 
     @PutMapping("/{shipmentId}")
@@ -32,6 +36,24 @@ public class ShipmentController {
     public ShipmentResponseDTO getShipmentByOrderId(@PathVariable UUID orderId) {
         Shipment shipment = shipmentService.getShipmentByOrderId(orderId);
         return ShipmentMapper.toDTO(shipment);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ShipmentResponseDTO>> getAllShipments() {
+        List<ShipmentResponseDTO> shipments = shipmentService.getAllShipments()
+                .stream()
+                .map(ShipmentMapper::toDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(shipments);
+    }
+
+    @GetMapping("/seller/{sellerId}")
+    public ResponseEntity<List<ShipmentResponseDTO>> getShipmentsBySeller(@PathVariable UUID sellerId) {
+        List<ShipmentResponseDTO> shipments = shipmentService.getShipmentsBySeller(sellerId)
+                .stream()
+                .map(ShipmentMapper::toDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(shipments);
     }
 
 

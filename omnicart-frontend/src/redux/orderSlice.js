@@ -54,6 +54,14 @@ const orderSlice = createSlice({
       .addCase(placeOrderThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.currentOrder = action.payload;
+        if (action.payload?.orderId) {
+          const exists = state.orders.some(
+            (order) => String(order?.orderId) === String(action.payload.orderId)
+          );
+          if (!exists) {
+            state.orders = [action.payload, ...state.orders];
+          }
+        }
       })
       .addCase(placeOrderThunk.rejected, (state, action) => {
         state.loading = false;
@@ -65,7 +73,9 @@ const orderSlice = createSlice({
       })
       .addCase(fetchUserOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload;
+        state.orders = Array.isArray(action.payload)
+          ? action.payload
+          : action.payload?.data ?? [];
       })
       .addCase(fetchUserOrders.rejected, (state, action) => {
         state.loading = false;
@@ -89,7 +99,9 @@ const orderSlice = createSlice({
       })
       .addCase(fetchAllOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload;
+        state.orders = Array.isArray(action.payload)
+          ? action.payload
+          : action.payload?.data ?? [];
       })
       .addCase(fetchAllOrders.rejected, (state, action) => {
         state.loading = false;

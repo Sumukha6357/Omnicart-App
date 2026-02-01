@@ -11,9 +11,13 @@ const initialState = {
 
 export const getAllProducts = createAsyncThunk(
   "product/getAll",
-  async (_, thunkAPI) => {
+  async (params = {}, thunkAPI) => {
     try {
-      return await fetchAllProducts()
+      const data = await fetchAllProducts(params)
+      const list = Array.isArray(data)
+        ? data
+        : data?.data ?? []
+      return list
     } catch (error) {
       return thunkAPI.rejectWithValue("Failed to load products")
     }

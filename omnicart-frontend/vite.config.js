@@ -4,6 +4,7 @@ import path from 'path'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
+  const backendUrl = env.VITE_BACKEND_URL || 'http://localhost:8080'
 
   return {
     plugins: [react()],
@@ -16,12 +17,12 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       proxy: {
         '/api': {
-          target: env.VITE_BACKEND_URL,
+          target: backendUrl,
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, '/api'),
         },
         '/auth': {
-          target: env.VITE_BACKEND_URL,
+          target: backendUrl,
           changeOrigin: true,
         },
       },

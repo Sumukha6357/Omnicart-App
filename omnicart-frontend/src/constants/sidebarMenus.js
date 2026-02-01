@@ -9,11 +9,11 @@ export const sidebarMenus = {
     { label: "Dashboard", path: "/seller/dashboard" },
     { label: "My Products", path: "/seller/products" },
     { label: "Buyers & Orders", path: "/seller/buyers-orders" },
-    ],
+  ],
   customer: [
-    { label: "Home", path: "/home" },
-    { label: "Orders", path: "/my-orders" },
+    { label: "Home", path: "/customer/home" },
+    { label: "Orders", path: "/orders" },
     { label: "Cart", path: "/cart" },
-    { label: "Profile", path: "/profile" },
+    { label: "Wishlist", path: "/wishlist" },
   ],
 }

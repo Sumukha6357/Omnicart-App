@@ -4,16 +4,21 @@ import api from "./axios";
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
-  return {
-    Authorization: `Bearer ${token}`,
-    "X-User-Role": role,
-  };
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  if (role) {
+    headers["X-User-Role"] = role;
+  }
+  return headers;
 };
 
-// ✅ Fetch all products
-export const fetchAllProducts = async () => {
+// ✅ Fetch all products (with optional filters)
+export const fetchAllProducts = async (params = {}) => {
   const response = await api.get(`/api/products`, {
     headers: getAuthHeaders(),
+    params,
   });
   return response.data?.data || response.data;
 };
@@ -51,10 +56,11 @@ export const deleteProductById = async (productId) => {
   return response.data;
 };
 
-// ✅ Fetch products by seller
-export const fetchProductsBySeller = async (sellerId) => {
+// ✅ Fetch products by seller (with optional filters)
+export const fetchProductsBySeller = async (sellerId, params = {}) => {
   const response = await api.get(`/api/products/seller/${sellerId}`, {
     headers: getAuthHeaders(),
+    params,
   });
   return response.data;
 };

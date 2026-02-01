@@ -10,6 +10,8 @@ omnicart-backend/target/
 omnicart-frontend/node_modules/
 
 .env
+.env.local
+.env.docker
 target/
 *.iml
 *.class

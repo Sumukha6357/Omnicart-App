@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -27,10 +28,12 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     public AdminAnalyticsResponseDTO getDashboardAnalytics(DateFilterRequestDTO filter) {
         LocalDate start = filter.getStartDate();
         LocalDate end = filter.getEndDate();
+        LocalDateTime startDateTime = start.atStartOfDay();
+        LocalDateTime endDateTime = end.plusDays(1).atStartOfDay();
 
         // --- Sales Summary ---
-        long totalOrders = orderRepository.countByOrderDateBetween(start.atStartOfDay(), end.plusDays(1).atStartOfDay());
-        BigDecimal totalRevenue = orderRepository.calculateTotalRevenueBetween(start, end);
+        long totalOrders = orderRepository.countByOrderDateBetween(startDateTime, endDateTime);
+        BigDecimal totalRevenue = orderRepository.calculateTotalRevenueBetween(startDateTime, endDateTime);
         BigDecimal avgOrderValue = totalOrders > 0
                 ? totalRevenue.divide(BigDecimal.valueOf(totalOrders), 2, BigDecimal.ROUND_HALF_UP)
                 : BigDecimal.ZERO;
@@ -54,8 +57,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 .newUsersThisWeek(newUsersThisWeek)
                 .build();
 
-        List<TopProductDto> topProducts = orderItemRepository.findTopProductsByRevenue(start, end);
-        List<CategorySalesDTO> categorySales = orderItemRepository.calculateSalesByCategory(start, end);
+        List<TopProductDto> topProducts = orderItemRepository.findTopProductsByRevenue(startDateTime, endDateTime);
+        List<CategorySalesDTO> categorySales = orderItemRepository.calculateSalesByCategory(startDateTime, endDateTime);
 
 
         return AdminAnalyticsResponseDTO.builder()

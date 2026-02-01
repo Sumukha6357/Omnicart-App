@@ -4,11 +4,14 @@ import com.sumuka.ecommerce_backend.dto.request.MailRequestDTO;
 import com.sumuka.ecommerce_backend.dto.response.AdminOrderItemResponse;
 import com.sumuka.ecommerce_backend.dto.response.AdminOrderResponse;
 import com.sumuka.ecommerce_backend.dto.response.OrderItemResponse;
+import com.sumuka.ecommerce_backend.dto.request.InventoryAdjustRequest;
+import com.sumuka.ecommerce_backend.dto.request.OrderProductRequest;
 import com.sumuka.ecommerce_backend.dto.request.OrderRequest;
 import com.sumuka.ecommerce_backend.dto.response.OrderResponse;
 import com.sumuka.ecommerce_backend.entity.*;
 import com.sumuka.ecommerce_backend.enums.OrderStatus;
 import com.sumuka.ecommerce_backend.repository.*;
+import com.sumuka.ecommerce_backend.service.contract.InventoryService;
 import com.sumuka.ecommerce_backend.service.contract.MailService;
 import com.sumuka.ecommerce_backend.service.contract.OrderService;
 import com.sumuka.ecommerce_backend.utility.TemplateLoader;
@@ -39,6 +42,8 @@ public class OrderServiceImpl implements OrderService {
 
     private final TemplateLoader templateLoader;
 
+    private final InventoryService inventoryService;
+
     public void sendOrderPlacedMail(Order order, User user) {
         String html = templateLoader.loadTemplate("order_placed.html")
                 .replace("${userName}", user.getName())
@@ -60,35 +65,58 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderResponse placeOrder(UUID userId, OrderRequest request) {
 
-        Cart cart = cartRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found for user"));
+        Optional<Cart> cartOpt = cartRepository.findById(userId);
+        List<OrderProductRequest> requestedProducts = request != null ? request.getProducts() : null;
+        boolean useCartItems = cartOpt.isPresent() && !cartOpt.get().getItems().isEmpty();
 
-        if (cart.getItems().isEmpty()) {
+        if (!useCartItems && (requestedProducts == null || requestedProducts.isEmpty())) {
             throw new RuntimeException("Cart is empty. Cannot place order.");
         }
 
         List<OrderItem> orderItems = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
 
-        for (CartItem cartItem : cart.getItems()) {
-            Product product = productRepository.findById(cartItem.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product not found"));
+        if (useCartItems) {
+            Cart cart = cartOpt.get();
+            for (CartItem cartItem : cart.getItems()) {
+                Product product = productRepository.findById(cartItem.getProductId())
+                        .orElseThrow(() -> new RuntimeException("Product not found"));
 
-            if (product.getQuantity() < cartItem.getQuantity()) {
-                throw new RuntimeException("Insufficient stock for product: " + product.getName());
+                if (product.getQuantity() < cartItem.getQuantity()) {
+                    throw new RuntimeException("Insufficient stock for product: " + product.getName());
+                }
+
+                adjustWarehouseStock(product.getId(), -cartItem.getQuantity(), "Order placed");
+
+                OrderItem orderItem = OrderItem.builder()
+                        .product(product)
+                        .quantity(cartItem.getQuantity())
+                        .price(product.getPrice())
+                        .build();
+
+                orderItems.add(orderItem);
+                totalAmount = totalAmount.add(product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
             }
+        } else {
+            for (OrderProductRequest reqItem : requestedProducts) {
+                Product product = productRepository.findById(reqItem.getProductId())
+                        .orElseThrow(() -> new RuntimeException("Product not found"));
 
-            product.setQuantity(product.getQuantity() - cartItem.getQuantity());
-            productRepository.save(product);
+                if (product.getQuantity() < reqItem.getQuantity()) {
+                    throw new RuntimeException("Insufficient stock for product: " + product.getName());
+                }
 
-            OrderItem orderItem = OrderItem.builder()
-                    .product(product)
-                    .quantity(cartItem.getQuantity())
-                    .price(product.getPrice())
-                    .build();
+                adjustWarehouseStock(product.getId(), -reqItem.getQuantity(), "Order placed");
 
-            orderItems.add(orderItem);
-            totalAmount = totalAmount.add(product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+                OrderItem orderItem = OrderItem.builder()
+                        .product(product)
+                        .quantity(reqItem.getQuantity())
+                        .price(product.getPrice())
+                        .build();
+
+                orderItems.add(orderItem);
+                totalAmount = totalAmount.add(product.getPrice().multiply(BigDecimal.valueOf(reqItem.getQuantity())));
+            }
         }
 
         User user = userRepository.findById(userId)
@@ -119,7 +147,9 @@ public class OrderServiceImpl implements OrderService {
 
         shipmentRepository.save(shipment);
 
-        cartItemRepository.deleteAll(cart.getItems());
+        if (useCartItems) {
+            cartItemRepository.deleteAll(cartOpt.get().getItems());
+        }
 
         mailService.sendMail(MailRequestDTO.builder()
                 .to(order.getUser().getEmail())
@@ -147,6 +177,22 @@ public class OrderServiceImpl implements OrderService {
                                 .build())
                         .collect(Collectors.toList()))
                 .build();
+    }
+
+    private void adjustWarehouseStock(UUID productId, int delta, String reason) {
+        InventoryAdjustRequest adjustRequest = new InventoryAdjustRequest();
+        adjustRequest.setProductId(productId);
+        adjustRequest.setQuantityDelta(delta);
+        adjustRequest.setReason(reason);
+        adjustRequest.setReferenceType("ORDER_LINE");
+        adjustRequest.setType(com.sumuka.ecommerce_backend.enums.StockMovementType.OUTBOUND);
+        adjustRequest.setReferenceId(null);
+
+        try {
+            inventoryService.adjustInventory(adjustRequest);
+        } catch (Exception ignored) {
+            // Avoid blocking order placement if warehouse not configured yet
+        }
     }
 
     @Override

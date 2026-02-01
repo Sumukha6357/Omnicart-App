@@ -25,6 +25,8 @@ public class Shipment {
 
     private String logisticsPartner;
 
+    private String trackingNumber;
+
     private LocalDateTime shippedAt;
 
     private LocalDateTime estimatedDelivery;

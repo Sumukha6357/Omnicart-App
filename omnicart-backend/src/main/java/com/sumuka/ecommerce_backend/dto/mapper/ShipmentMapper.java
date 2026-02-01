@@ -16,6 +16,7 @@ public class ShipmentMapper {
                 .orderId(shipment.getOrder().getId())
                 .status(shipment.getStatus())
                 .logisticsPartner(shipment.getLogisticsPartner())
+                .trackingNumber(shipment.getTrackingNumber())
                 .shippedAt(shipment.getShippedAt())
                 .estimatedDelivery(shipment.getEstimatedDelivery())
                 .build();

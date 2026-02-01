@@ -16,6 +16,7 @@ public class ShipmentResponseDTO {
     private UUID orderId;
     private String status;
     private String logisticsPartner;
+    private String trackingNumber;
     private LocalDateTime shippedAt;
     private LocalDateTime estimatedDelivery;
 }
