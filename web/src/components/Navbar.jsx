@@ -64,6 +64,15 @@ const Navbar = () => {
     return navigate("/", { replace: true });
   };
 
+  const quickCategories = [
+    { label: "All", value: "" },
+    { label: "Today's Deals", value: "" },
+    { label: "Beauty", value: "beauty" },
+    { label: "Home & Kitchen", value: "home-decoration" },
+    { label: "Groceries", value: "groceries" },
+    { label: "Smartphones", value: "smartphones" },
+  ];
+
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
       <nav className="mx-auto flex w-full max-w-7xl items-center gap-3 px-3 py-3 sm:px-6" aria-label="Main navigation">
@@ -216,6 +225,31 @@ const Navbar = () => {
               onChange={(e) => setQuery(e.target.value)}
               className="h-11 w-full rounded-pill border border-slate-300 bg-slate-50 pl-11 pr-4 text-sm text-slate-800 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
             />
+          </div>
+        </div>
+      )}
+
+      {!isAuthPage && (
+        <div className="border-t border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95">
+          <div className="mx-auto flex w-full max-w-7xl items-center gap-2 overflow-x-auto px-3 py-2 sm:px-6">
+            {quickCategories.map((cat) => (
+              <button
+                key={cat.label}
+                type="button"
+                onClick={() => {
+                  localStorage.setItem("omnicart_pref_category", cat.value);
+                  if (cat.label === "Today's Deals") {
+                    localStorage.setItem("omnicart_pref_sort", "popular");
+                  } else {
+                    localStorage.setItem("omnicart_pref_sort", "");
+                  }
+                  navigate("/customer/home");
+                }}
+                className="whitespace-nowrap rounded-pill border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                {cat.label}
+              </button>
+            ))}
           </div>
         </div>
       )}

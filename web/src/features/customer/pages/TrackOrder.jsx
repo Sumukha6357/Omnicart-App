@@ -1,8 +1,8 @@
-﻿// components/TrackOrder.jsx
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { fetchShipmentByOrderId, clearShipmentState } from "../../../redux/shipmentSlice";
+import CustomerPageShell from "../../../components/customer/CustomerPageShell";
 
 export default function TrackOrder() {
   const location = useLocation();
@@ -61,26 +61,21 @@ export default function TrackOrder() {
   const currentIndex = statusSteps.findIndex((step) => step.key === normalizedStatus);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-slate-900 px-4">
-      <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow max-w-2xl w-full">
-        <div className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-          <Link to="/customer/home" className="hover:text-blue-600">Customer</Link>
-          <span className="mx-2">/</span>
-          <span>Track Order</span>
-        </div>
-        <h2 className="text-2xl font-bold mb-2">Track Your Order</h2>
-        <p className="text-sm text-gray-600 dark:text-slate-300 mb-6">
-          Order ID: <span className="font-semibold">{orderId}</span>
-        </p>
-
-        {loading && <p className="text-gray-600 dark:text-slate-300 mb-4">Fetching shipment...</p>}
-        {error && <p className="text-red-600 mb-4">{error}</p>}
+    <CustomerPageShell
+      userRole="customer"
+      pageLabel="Track Order"
+      title="Track Your Order"
+      subtitle={`Order ID: ${orderId}`}
+    >
+      <div className="rounded-card border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        {loading && <p className="mb-4 text-slate-600 dark:text-slate-300">Fetching shipment...</p>}
+        {error && <p className="mb-4 text-red-600">{error}</p>}
 
         {shipment && (
-          <div className="text-left">
+          <div>
             <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4">Shipment Status</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <h3 className="mb-4 text-lg font-semibold">Shipment Status</h3>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
                 {statusSteps.map((step, idx) => {
                   const done = idx <= currentIndex;
                   return (
@@ -100,7 +95,7 @@ export default function TrackOrder() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 space-y-2">
+            <div className="space-y-2 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Shipment ID</span>
                 <span className="font-semibold">{shipment.shipmentId}</span>
@@ -120,7 +115,7 @@ export default function TrackOrder() {
                     (() => {
                       const url = getTrackingUrl(shipment.logisticsPartner, shipment.trackingNumber);
                       return url ? (
-                        <a href={url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                        <a href={url} target="_blank" rel="noreferrer" className="text-brand-600 hover:underline">
                           {shipment.trackingNumber}
                         </a>
                       ) : (
@@ -140,7 +135,6 @@ export default function TrackOrder() {
           </div>
         )}
       </div>
-    </div>
+    </CustomerPageShell>
   );
 }
-

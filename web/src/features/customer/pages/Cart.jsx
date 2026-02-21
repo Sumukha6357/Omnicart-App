@@ -1,150 +1,131 @@
-ï»¿import { Link, useNavigate } from "react-router-dom"
-import { useSelector, useDispatch } from "react-redux"
-import { removeItem, fetchCart } from "../../../redux/cartSlice"
+import { useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { removeItem, fetchCart } from "../../../redux/cartSlice";
+import { ToastContext } from "../../../context/ToastContext";
+import CustomerPageShell from "../../../components/customer/CustomerPageShell";
+import { formatInr } from "../../../utils/formatters";
 
 export default function Cart() {
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
-  const { products } = useSelector(state => state.product)
-  const cart = useSelector(state => state.cart.cartItems) || []
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { showToast } = useContext(ToastContext);
+  const { products = [] } = useSelector((state) => state.product);
+  const cart = useSelector((state) => state.cart.cartItems) || [];
 
-  const handleCheckout = () => {
-    navigate("/checkout")
-  }
-
-  // Calculate total using latest product price
   const total = cart.reduce((acc, item) => {
-    const product = products.find(p => p.id === item.productId)
-    const price = product ? product.price : item.price
-    return acc + price * item.quantity
-  }, 0)
+    const product = products.find((p) => String(p.id) === String(item.productId));
+    const price = Number(product ? product.price : item.price || 0);
+    return acc + price * Number(item.quantity || 1);
+  }, 0);
+
+  const handleRemove = async (productId) => {
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    const userId = user?.id;
+    if (!userId) {
+      showToast("Please login first.", "info");
+      return;
+    }
+    await dispatch(removeItem({ userId, productId }));
+    await dispatch(fetchCart({ userId }));
+    showToast("Removed from cart.", "info");
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-          <Link to="/customer/home" className="hover:text-blue-600">Customer</Link>
-          <span className="mx-2">/</span>
-          <span>Cart</span>
+    <CustomerPageShell
+      userRole="customer"
+      pageLabel="Cart"
+      title="Your Cart"
+      subtitle="Review items and proceed to secure checkout"
+      actions={
+        <span className="rounded-pill border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+          {cart.length} items
+        </span>
+      }
+    >
+      {cart.length === 0 ? (
+        <div className="rounded-card border border-dashed border-slate-300 bg-white p-10 text-center dark:border-slate-700 dark:bg-slate-900">
+          <p className="text-base font-semibold text-slate-700 dark:text-slate-200">Your cart is empty</p>
+          <button
+            onClick={() => navigate("/customer/home")}
+            className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+          >
+            Continue Shopping
+          </button>
         </div>
-
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-3xl font-extrabold tracking-tight">Your Cart</h2>
-            <p className="text-sm text-gray-600 dark:text-slate-300">
-              Review items and proceed to secure checkout.
-            </p>
-          </div>
-          <div className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 shadow-sm">
-            <div className="text-sm text-gray-600 dark:text-slate-300">Items</div>
-            <div className="text-lg font-bold">{cart.length}</div>
-          </div>
-        </div>
-
-        {cart.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-gray-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-10 text-center shadow-sm">
-            <div className="text-lg font-semibold mb-2">Your cart is empty</div>
-            <div className="text-sm text-gray-600 dark:text-slate-300 mb-6">
-              Add products to see them here.
-            </div>
-            <button
-              onClick={() => {
-                const user = JSON.parse(localStorage.getItem('user'))
-                const role = user?.role?.toLowerCase()
-                if (role === "customer") {
-                  navigate("/customer/home")
-                } else {
-                  navigate("/")
-                }
-              }}
-              className="inline-flex items-center justify-center rounded-md bg-blue-600 text-white px-4 py-2 text-sm hover:bg-blue-700"
-            >
-              Continue Shopping
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-4">
-              {cart.map((item) => {
-                const product = products.find(p => p.id === item.productId)
-                const price = product?.price ?? item.price
-                const subtotal = price * item.quantity
-                return (
-                  <div
-                    key={item.productId}
-                    className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-2xl shadow-sm p-4 sm:p-5"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <img
-                          src={product?.imageUrl || item.imageUrl || "/placeholder.jpg"}
-                          alt={product?.name || item.name || "Product"}
-                          className="w-20 h-20 object-contain border dark:border-slate-700 rounded-xl bg-gray-50 dark:bg-slate-950"
-                        />
-                        <div>
-                          <p className="font-semibold text-lg">{product?.name || item.name || "Unnamed Product"}</p>
-                          <p className="text-sm text-gray-600 dark:text-slate-300">
-                            Rs. {price} - Qty {item.quantity}
-                          </p>
-                          <p className="text-sm font-semibold text-green-600 mt-1">
-                            Subtotal: Rs. {subtotal}
-                          </p>
-                        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="space-y-4 lg:col-span-2">
+            {cart.map((item) => {
+              const product = products.find((p) => String(p.id) === String(item.productId));
+              const price = Number(product?.price ?? item.price ?? 0);
+              const subtotal = price * Number(item.quantity || 1);
+              return (
+                <article
+                  key={item.productId}
+                  className="rounded-card border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={product?.imageUrl || item.imageUrl || "/placeholder.jpg"}
+                        alt={product?.name || item.name || "Product"}
+                        className="h-20 w-20 rounded-lg bg-slate-100 object-contain dark:bg-slate-950"
+                      />
+                      <div>
+                        <p className="text-base font-bold text-slate-900 dark:text-slate-100">
+                          {product?.name || item.name || "Unnamed Product"}
+                        </p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          {formatInr(price)} • Qty {item.quantity}
+                        </p>
+                        <p className="text-sm font-semibold text-emerald-600">Subtotal: {formatInr(subtotal)}</p>
                       </div>
-                      <button
-                        onClick={async () => {
-                          const user = JSON.parse(localStorage.getItem('user'))
-                          const userId = user?.id
-                          if (!userId) {
-                            alert('You must be logged in to remove from cart.')
-                            return
-                          }
-                          await dispatch(removeItem({ userId, productId: item.productId }))
-                          await dispatch(fetchCart({ userId }))
-                        }}
-                        className="sm:self-start text-red-600 hover:text-red-800 font-semibold"
-                      >
-                        Remove
-                      </button>
                     </div>
+                    <button
+                      onClick={() => handleRemove(item.productId)}
+                      className="self-start rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-rose-700"
+                    >
+                      Remove
+                    </button>
                   </div>
-                )
-              })}
-            </div>
+                </article>
+              );
+            })}
+          </div>
 
-            <div className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-2xl shadow-sm p-6 h-fit">
-              <h3 className="text-lg font-bold mb-4">Order Summary</h3>
-              <div className="flex items-center justify-between text-sm text-gray-600 dark:text-slate-300 mb-2">
+          <aside className="h-fit rounded-card border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Order Summary</h3>
+            <div className="mt-4 space-y-2 text-sm">
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
                 <span>Subtotal</span>
-                <span>Rs. {total}</span>
+                <span>{formatInr(total)}</span>
               </div>
-              <div className="flex items-center justify-between text-sm text-gray-600 dark:text-slate-300 mb-2">
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
                 <span>Shipping</span>
                 <span>Free</span>
               </div>
-              <div className="border-t dark:border-slate-800 my-3"></div>
-              <div className="flex items-center justify-between text-lg font-bold mb-4">
-                <span>Total</span>
-                <span>Rs. {total}</span>
-              </div>
-              <button
-                onClick={handleCheckout}
-                className="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 mb-3"
-              >
-                Proceed to Checkout
-              </button>
-              <button
-                onClick={() => navigate('/orders')}
-                className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-              >
-                View Order History
-              </button>
             </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
+            <div className="my-3 border-t border-slate-200 dark:border-slate-800" />
+            <div className="flex items-center justify-between text-lg font-bold text-slate-900 dark:text-slate-100">
+              <span>Total</span>
+              <span>{formatInr(total)}</span>
+            </div>
+            <button
+              onClick={() => navigate("/checkout")}
+              className="mt-4 w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+            >
+              Proceed to Checkout
+            </button>
+            <button
+              onClick={() => navigate("/orders")}
+              className="mt-2 w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
+            >
+              View Order History
+            </button>
+          </aside>
+        </div>
+      )}
+    </CustomerPageShell>
+  );
 }
-
-

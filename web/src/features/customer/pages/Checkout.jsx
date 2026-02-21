@@ -1,44 +1,44 @@
-﻿import { useSelector, useDispatch } from "react-redux"
-import { useState, useEffect } from "react"
-import { addItem, removeItem, fetchCart } from "../../../redux/cartSlice"
-import { Link, useNavigate, useLocation } from "react-router-dom"
-import { getProductById } from "../../../redux/productSlice"
-import { getAddresses, createAddress, updateAddress, deleteAddress } from "../../../api/addressApi"
+import { useSelector, useDispatch } from "react-redux";
+import { useState, useEffect, useContext } from "react";
+import { addItem, removeItem, fetchCart } from "../../../redux/cartSlice";
+import { useNavigate, useLocation } from "react-router-dom";
+import { getProductById } from "../../../redux/productSlice";
+import { getAddresses, createAddress, updateAddress, deleteAddress } from "../../../api/addressApi";
+import CustomerPageShell from "../../../components/customer/CustomerPageShell";
+import { ToastContext } from "../../../context/ToastContext";
+import { formatInr } from "../../../utils/formatters";
 
 export default function Checkout() {
-  const { cartItems } = useSelector((state) => state.cart)
-  const { products } = useSelector((state) => state.product)
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const [address, setAddress] = useState("")
-  const [paymentMode, setPaymentMode] = useState("COD")
+  const { cartItems } = useSelector((state) => state.cart);
+  const { products } = useSelector((state) => state.product);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { showToast } = useContext(ToastContext);
   const storedUser = (() => {
     try {
-      return JSON.parse(localStorage.getItem("user"))
+      return JSON.parse(localStorage.getItem("user"));
     } catch {
-      return null
+      return null;
     }
-  })()
-  const userId = storedUser?.id
-  const addressKey = (id) => `addresses:${id || "guest"}`
-  const [addresses, setAddresses] = useState([])
-  const [selectedAddressId, setSelectedAddressId] = useState("")
-  const [addressLabel, setAddressLabel] = useState("")
-  const [addressLine, setAddressLine] = useState("")
-  const [editingId, setEditingId] = useState(null)
-  const [showAddressForm, setShowAddressForm] = useState(true)
+  })();
+  const userId = storedUser?.id;
+  const addressKey = (id) => `addresses:${id || "guest"}`;
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState("");
+  const [addressLabel, setAddressLabel] = useState("");
+  const [addressLine, setAddressLine] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [showAddressForm, setShowAddressForm] = useState(true);
 
-  // Check for buyNow mode via query params
   const searchParams = new URLSearchParams(location.search);
   const buyNow = searchParams.get("buyNow") === "1";
   const buyNowProductId = searchParams.get("productId");
   const buyNowQuantity = parseInt(searchParams.get("quantity"), 10) || 1;
 
-  // For Buy Now, fetch product if not present
   useEffect(() => {
     if (buyNow && buyNowProductId) {
-      const product = products.find(p => String(p.id) === String(buyNowProductId));
+      const product = products.find((p) => String(p.id) === String(buyNowProductId));
       if (!product) {
         dispatch(getProductById(buyNowProductId));
       }
@@ -46,62 +46,57 @@ export default function Checkout() {
   }, [buyNow, buyNowProductId, products, dispatch]);
 
   useEffect(() => {
-    let active = true
+    let active = true;
     const loadAddresses = async () => {
       if (!userId) {
-        const raw = localStorage.getItem(addressKey(userId))
-        const parsed = raw ? JSON.parse(raw) : []
+        const raw = localStorage.getItem(addressKey(userId));
+        const parsed = raw ? JSON.parse(raw) : [];
         if (Array.isArray(parsed) && active) {
-          setAddresses(parsed)
+          setAddresses(parsed);
           if (parsed.length > 0) {
-            setSelectedAddressId(parsed[0].id)
-            setAddress(parsed[0].text)
-            setShowAddressForm(false)
+            setSelectedAddressId(parsed[0].id);
+            setShowAddressForm(false);
           }
         }
-        return
+        return;
       }
       try {
-        const data = await getAddresses(userId)
-        if (!active) return
-        const list = Array.isArray(data) ? data : []
-        setAddresses(list)
+        const data = await getAddresses(userId);
+        if (!active) return;
+        const list = Array.isArray(data) ? data : [];
+        setAddresses(list);
         if (list.length > 0) {
-          setSelectedAddressId(list[0].id)
-          setAddress(list[0].text)
-          setShowAddressForm(false)
+          setSelectedAddressId(list[0].id);
+          setShowAddressForm(false);
         } else {
-          setSelectedAddressId("")
-          setAddress("")
-          setShowAddressForm(true)
+          setSelectedAddressId("");
+          setShowAddressForm(true);
         }
-      } catch (err) {
-        if (!active) return
-        setAddresses([])
-        setSelectedAddressId("")
-        setAddress("")
-        setShowAddressForm(true)
+      } catch {
+        if (!active) return;
+        setAddresses([]);
+        setSelectedAddressId("");
+        setShowAddressForm(true);
       }
-    }
-    loadAddresses()
+    };
+    loadAddresses();
     return () => {
-      active = false
-    }
-  }, [userId])
+      active = false;
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) {
-      localStorage.setItem(addressKey(userId), JSON.stringify(addresses))
+      localStorage.setItem(addressKey(userId), JSON.stringify(addresses));
     }
-  }, [addresses, userId])
+  }, [addresses, userId]);
 
   let displayItems = cartItems;
-  // For single product fallback
   const singleProduct = useSelector((state) => state.product.product);
   const productLoading = useSelector((state) => state.product.loading);
 
   if (buyNow && buyNowProductId) {
-    let product = products.find(p => String(p.id) === String(buyNowProductId));
+    let product = products.find((p) => String(p.id) === String(buyNowProductId));
     if (!product && singleProduct && String(singleProduct.id) === String(buyNowProductId)) {
       product = singleProduct;
     }
@@ -112,304 +107,251 @@ export default function Checkout() {
     }
   }
 
-  // Calculate total using latest product price
   const total = displayItems.reduce((acc, item) => {
-    const product = products.find(p => p.id === item.productId);
+    const product = products.find((p) => p.id === item.productId);
     const price = product ? product.price : item.price;
     return acc + price * item.quantity;
   }, 0);
 
-  // Quantity change handler
   const handleQuantityChange = (item, newQuantity) => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const userId = user?.id;
-    if (!userId) return;
-    if (newQuantity < 1) return;
-    // Remove and re-add with new quantity
-    dispatch(removeItem({ userId, productId: item.productId })).then(() => {
-      dispatch(addItem({ userId, productId: item.productId, quantity: newQuantity })).then(() => {
-        dispatch(fetchCart({ userId }));
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    const uid = user?.id;
+    if (!uid || newQuantity < 1) return;
+    dispatch(removeItem({ userId: uid, productId: item.productId })).then(() => {
+      dispatch(addItem({ userId: uid, productId: item.productId, quantity: newQuantity })).then(() => {
+        dispatch(fetchCart({ userId: uid }));
       });
     });
   };
 
   const handlePlaceOrder = async () => {
     if (!userId) {
-      alert("You must be logged in to place an order.")
-      navigate("/login")
-      return
+      showToast("You must be logged in to place an order.", "info");
+      navigate("/login");
+      return;
+    }
+
+    const selected = addresses.find((a) => a.id === selectedAddressId);
+    const address = selected?.text || "";
+    if (!address.trim()) {
+      showToast("Please select or add an address.", "error");
+      return;
     }
 
     const orderItems = displayItems.map((item) => {
-      const product = products.find((p) => p.id === item.productId)
-      const price = product?.price ?? item.price
-      return {
-        productId: item.productId,
-        quantity: item.quantity,
-        name: item.name,
-        price,
-      }
-    })
+      const product = products.find((p) => p.id === item.productId);
+      const price = product?.price ?? item.price;
+      return { productId: item.productId, quantity: item.quantity, name: item.name, price };
+    });
 
     const orderData = {
       items: orderItems,
-      products: displayItems.map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-      })),
+      products: displayItems.map((item) => ({ productId: item.productId, quantity: item.quantity })),
       address,
       total,
       buyNow,
-    }
+    };
 
-    navigate("/payment", {
-      state: {
-        orderDetails: orderData,
-      },
-    })
-  }
+    navigate("/payment", { state: { orderDetails: orderData } });
+  };
 
   const handleDeleteAddress = async (addrId) => {
     if (userId) {
       try {
-        await deleteAddress(addrId)
-      } catch (err) {
-        alert("Failed to delete address. Please try again.")
-        return
+        await deleteAddress(addrId);
+      } catch {
+        showToast("Failed to delete address.", "error");
+        return;
       }
     }
-    const next = addresses.filter((a) => a.id !== addrId)
-    setAddresses(next)
+    const next = addresses.filter((a) => a.id !== addrId);
+    setAddresses(next);
     if (selectedAddressId === addrId) {
-      const nextSelected = next[0]
-      setSelectedAddressId(nextSelected?.id || "")
-      setAddress(nextSelected?.text || "")
-      setShowAddressForm(next.length === 0)
+      const nextSelected = next[0];
+      setSelectedAddressId(nextSelected?.id || "");
+      setShowAddressForm(next.length === 0);
     }
-  }
+  };
 
   const handleSaveAddress = async () => {
     if (!addressLine.trim()) {
-      alert("Enter an address.")
-      return
+      showToast("Enter an address.", "error");
+      return;
     }
     if (userId) {
       try {
         if (editingId) {
-          const updated = await updateAddress(editingId, {
-            label: addressLabel || "Saved Address",
-            text: addressLine,
-          })
-          const next = addresses.map((a) => (a.id === editingId ? updated : a))
-          setAddresses(next)
-          setSelectedAddressId(updated.id)
-          setAddress(updated.text)
-          setEditingId(null)
+          const updated = await updateAddress(editingId, { label: addressLabel || "Saved Address", text: addressLine });
+          const next = addresses.map((a) => (a.id === editingId ? updated : a));
+          setAddresses(next);
+          setSelectedAddressId(updated.id);
+          setEditingId(null);
         } else {
-          const created = await createAddress(userId, {
-            label: addressLabel || "Saved Address",
-            text: addressLine,
-          })
-          const next = [created, ...addresses]
-          setAddresses(next)
-          setSelectedAddressId(created.id)
-          setAddress(created.text)
+          const created = await createAddress(userId, { label: addressLabel || "Saved Address", text: addressLine });
+          const next = [created, ...addresses];
+          setAddresses(next);
+          setSelectedAddressId(created.id);
         }
-      } catch (err) {
-        alert("Failed to save address. Please try again.")
-        return
+      } catch {
+        showToast("Failed to save address.", "error");
+        return;
       }
     } else {
       if (editingId) {
-        const next = addresses.map((a) =>
-          a.id === editingId ? { ...a, label: addressLabel, text: addressLine } : a
-        )
-        setAddresses(next)
-        setSelectedAddressId(editingId)
-        setAddress(addressLine)
-        setEditingId(null)
+        const next = addresses.map((a) => (a.id === editingId ? { ...a, label: addressLabel, text: addressLine } : a));
+        setAddresses(next);
+        setSelectedAddressId(editingId);
+        setEditingId(null);
       } else {
-        const newAddress = {
-          id: `addr-${Date.now()}`,
-          label: addressLabel || "Saved Address",
-          text: addressLine,
-        }
-        const next = [newAddress, ...addresses]
-        setAddresses(next)
-        setSelectedAddressId(newAddress.id)
-        setAddress(newAddress.text)
+        const newAddress = { id: `addr-${Date.now()}`, label: addressLabel || "Saved Address", text: addressLine };
+        const next = [newAddress, ...addresses];
+        setAddresses(next);
+        setSelectedAddressId(newAddress.id);
       }
     }
-    setAddressLabel("")
-    setAddressLine("")
-    setShowAddressForm(false)
-  }
+    setAddressLabel("");
+    setAddressLine("");
+    setShowAddressForm(false);
+    showToast("Address saved.", "success");
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-          <Link to="/customer/home" className="hover:text-blue-600">Customer</Link>
-          <span className="mx-2">/</span>
-          <span>Checkout</span>
-        </div>
-
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-3xl font-extrabold tracking-tight">Checkout</h2>
-            <p className="text-sm text-gray-600 dark:text-slate-300">
-              Confirm shipping and review your order.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-2xl shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold">Shipping Address</h3>
-                {addresses.length > 0 && (
-                  <button
-                    onClick={() => {
-                      setEditingId(null)
-                      setAddressLabel("")
-                      setAddressLine("")
-                      setShowAddressForm(true)
-                    }}
-                    className="text-sm text-blue-600 hover:text-blue-800 font-semibold"
-                  >
-                    Add New
-                  </button>
-                )}
-              </div>
-
+    <CustomerPageShell
+      userRole="customer"
+      pageLabel="Checkout"
+      title="Checkout"
+      subtitle="Confirm address and review your order"
+    >
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <section className="rounded-card border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold">Shipping Address</h3>
               {addresses.length > 0 && (
-                <div className="space-y-3 mb-6">
-                  {addresses.map((addr) => (
-                    <label
-                      key={addr.id}
-                      className="flex items-start gap-3 border dark:border-slate-800 rounded-xl p-3 cursor-pointer"
-                    >
-                      <input
-                        type="radio"
-                        name="address"
-                        checked={selectedAddressId === addr.id}
-                        onChange={() => {
-                          setSelectedAddressId(addr.id)
-                          setAddress(addr.text)
-                          setShowAddressForm(false)
-                        }}
-                      />
-                      <div className="flex-1">
-                        <div className="font-semibold">{addr.label || "Saved Address"}</div>
-                        <div className="text-sm text-gray-600 dark:text-slate-300">{addr.text}</div>
-                        <div className="mt-2 flex gap-3 text-sm">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingId(addr.id)
-                              setAddressLabel(addr.label || "")
-                              setAddressLine(addr.text || "")
-                              setShowAddressForm(true)
-                            }}
-                            className="text-blue-600 hover:text-blue-800 font-semibold"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              handleDeleteAddress(addr.id)
-                            }}
-                            className="text-red-600 hover:text-red-800 font-semibold"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              )}
-
-              {showAddressForm && (
-                <div className="grid grid-cols-1 gap-3">
-                  <input
-                    type="text"
-                    className="w-full border dark:border-slate-700 px-4 py-2 rounded"
-                    placeholder="Label (e.g. Home, Office)"
-                    value={addressLabel}
-                    onChange={(e) => setAddressLabel(e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    className="w-full border dark:border-slate-700 px-4 py-2 rounded"
-                    placeholder="123 Main Street, Bangalore, IN"
-                    value={addressLine}
-                    onChange={(e) => setAddressLine(e.target.value)}
-                  />
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <button
-                      onClick={handleSaveAddress}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                    >
-                      {editingId ? "Save Changes" : "Save Address"}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setAddressLabel("")
-                        setAddressLine("")
-                        setEditingId(null)
-                        setShowAddressForm(false)
-                      }}
-                      className="bg-gray-200 dark:bg-slate-800 text-gray-800 dark:text-slate-100 px-4 py-2 rounded-md"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
+                <button
+                  onClick={() => {
+                    setEditingId(null);
+                    setAddressLabel("");
+                    setAddressLine("");
+                    setShowAddressForm(true);
+                  }}
+                  className="text-sm font-semibold text-brand-600 hover:text-brand-700"
+                >
+                  Add New
+                </button>
               )}
             </div>
 
-            <div className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-2xl shadow-sm p-6">
-              <h3 className="text-lg font-bold mb-4">Your Items</h3>
-              {buyNow && productLoading && displayItems.length === 0 && (
-                <div>Loading product details...</div>
-              )}
-              {!productLoading && displayItems.length === 0 && (
-                <div>No items to checkout.</div>
-              )}
-              <div className="space-y-4">
-                {displayItems.map(item => {
-                  let product = products.find(p => p.id === item.productId);
-                  if (!product && singleProduct && String(singleProduct.id) === String(item.productId)) {
-                    product = singleProduct;
-                  }
-                  const name = item.name || product?.name || item.productId;
-                  const price = product?.price ?? item.price;
-                  return (
-                    <div
-                      key={item.productId}
-                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border dark:border-slate-800 rounded-xl p-4"
-                    >
+            {addresses.length > 0 && (
+              <div className="mb-6 space-y-3">
+                {addresses.map((addr) => (
+                  <label key={addr.id} className="flex items-start gap-3 rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+                    <input
+                      type="radio"
+                      name="address"
+                      checked={selectedAddressId === addr.id}
+                      onChange={() => {
+                        setSelectedAddressId(addr.id);
+                        setShowAddressForm(false);
+                      }}
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold">{addr.label || "Saved Address"}</div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400">{addr.text}</div>
+                      <div className="mt-2 flex gap-3 text-sm">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingId(addr.id);
+                            setAddressLabel(addr.label || "");
+                            setAddressLine(addr.text || "");
+                            setShowAddressForm(true);
+                          }}
+                          className="font-semibold text-brand-600 hover:text-brand-700"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteAddress(addr.id)}
+                          className="font-semibold text-rose-600 hover:text-rose-700"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            {showAddressForm && (
+              <div className="grid grid-cols-1 gap-3">
+                <input
+                  type="text"
+                  className="rounded-lg border border-slate-300 px-4 py-2 dark:border-slate-700 dark:bg-slate-950"
+                  placeholder="Label (e.g. Home, Office)"
+                  value={addressLabel}
+                  onChange={(e) => setAddressLabel(e.target.value)}
+                />
+                <input
+                  type="text"
+                  className="rounded-lg border border-slate-300 px-4 py-2 dark:border-slate-700 dark:bg-slate-950"
+                  placeholder="123 Main Street, Bangalore, IN"
+                  value={addressLine}
+                  onChange={(e) => setAddressLine(e.target.value)}
+                />
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <button onClick={handleSaveAddress} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
+                    {editingId ? "Save Changes" : "Save Address"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAddressLabel("");
+                      setAddressLine("");
+                      setEditingId(null);
+                      setShowAddressForm(false);
+                    }}
+                    className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-card border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h3 className="mb-4 text-lg font-bold">Your Items</h3>
+            {buyNow && productLoading && displayItems.length === 0 && <div>Loading product details...</div>}
+            {!productLoading && displayItems.length === 0 && <div>No items to checkout.</div>}
+            <div className="space-y-4">
+              {displayItems.map((item) => {
+                let product = products.find((p) => p.id === item.productId);
+                if (!product && singleProduct && String(singleProduct.id) === String(item.productId)) {
+                  product = singleProduct;
+                }
+                const name = item.name || product?.name || item.productId;
+                const price = Number(product?.price ?? item.price ?? 0);
+                return (
+                  <div key={item.productId} className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-4">
                         <img
                           src={product?.imageUrl || "/placeholder.jpg"}
                           alt={name}
-                          className="w-16 h-16 object-contain border dark:border-slate-700 rounded-lg bg-gray-50 dark:bg-slate-950"
+                          className="h-16 w-16 rounded-lg bg-slate-100 object-contain dark:bg-slate-950"
                         />
                         <div>
                           <div className="font-semibold">{name}</div>
-                          <div className="text-sm text-gray-600 dark:text-slate-300">
-                            Rs. {price}
-                          </div>
+                          <div className="text-sm text-slate-500 dark:text-slate-400">{formatInr(price)}</div>
                         </div>
                       </div>
                       {!buyNow && (
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleQuantityChange(item, item.quantity - 1)}
-                            className="px-2 py-1 bg-gray-200 dark:bg-slate-800 rounded text-lg"
+                            className="rounded bg-slate-200 px-2 py-1 text-lg dark:bg-slate-800"
                             disabled={item.quantity <= 1}
                           >
                             -
@@ -418,68 +360,57 @@ export default function Checkout() {
                             type="number"
                             min={1}
                             value={item.quantity}
-                            onChange={e => handleQuantityChange(item, Number(e.target.value))}
-                            className="w-14 border dark:border-slate-700 rounded text-center"
+                            onChange={(e) => handleQuantityChange(item, Number(e.target.value))}
+                            className="w-14 rounded border border-slate-300 text-center dark:border-slate-700 dark:bg-slate-950"
                           />
                           <button
                             onClick={() => handleQuantityChange(item, item.quantity + 1)}
-                            className="px-2 py-1 bg-gray-200 dark:bg-slate-800 rounded text-lg"
+                            className="rounded bg-slate-200 px-2 py-1 text-lg dark:bg-slate-800"
                           >
                             +
                           </button>
                         </div>
                       )}
-                      <div className="text-sm font-semibold text-green-600">
-                        Subtotal: Rs. {price * item.quantity}
-                      </div>
+                      <div className="text-sm font-semibold text-emerald-600">Subtotal: {formatInr(price * item.quantity)}</div>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          </section>
+        </div>
 
-          <div className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-2xl shadow-sm p-6 h-fit">
-            <h3 className="text-lg font-bold mb-4">Order Summary</h3>
-            <div className="flex items-center justify-between text-sm text-gray-600 dark:text-slate-300 mb-2">
+        <aside className="h-fit rounded-card border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <h3 className="text-lg font-bold">Order Summary</h3>
+          <div className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+            <div className="flex items-center justify-between">
               <span>Subtotal</span>
-              <span>Rs. {productLoading && buyNow ? "..." : total}</span>
+              <span>{productLoading && buyNow ? "..." : formatInr(total)}</span>
             </div>
-            <div className="flex items-center justify-between text-sm text-gray-600 dark:text-slate-300 mb-2">
+            <div className="flex items-center justify-between">
               <span>Shipping</span>
               <span>Free</span>
             </div>
-            <div className="border-t dark:border-slate-800 my-3"></div>
-            <div className="flex items-center justify-between text-lg font-bold mb-4">
-              <span>Total</span>
-              <span>Rs. {productLoading && buyNow ? "..." : total}</span>
-            </div>
-            <button
-              onClick={handlePlaceOrder}
-              className="w-full bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700"
-            >
-              Continue to Payment
-            </button>
-            <button
-              onClick={() => {
-                try {
-                  const user = JSON.parse(localStorage.getItem("user"));
-                  const role = user?.role?.toLowerCase();
-                  if (role === "customer") {
-                    navigate("/customer/home");
-                    return;
-                  }
-                } catch {}
-                navigate("/");
-              }}
-              className="w-full mt-3 bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
-            >
-              Back to Products
-            </button>
           </div>
-        </div>
+          <div className="my-3 border-t border-slate-200 dark:border-slate-800" />
+          <div className="flex items-center justify-between text-lg font-bold">
+            <span>Total</span>
+            <span>{productLoading && buyNow ? "..." : formatInr(total)}</span>
+          </div>
+          <button
+            onClick={handlePlaceOrder}
+            className="mt-4 w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+          >
+            Continue to Payment
+          </button>
+          <button
+            onClick={() => navigate("/customer/home")}
+            className="mt-2 w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
+          >
+            Back to Products
+          </button>
+        </aside>
       </div>
-    </div>
-  )
+    </CustomerPageShell>
+  );
 }
-

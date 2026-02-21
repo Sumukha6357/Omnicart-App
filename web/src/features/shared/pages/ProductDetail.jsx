@@ -38,6 +38,18 @@ export default function ProductDetail() {
   }, [productToShow?.imageUrl]);
 
   useEffect(() => {
+    if (!productToShow?.id) return;
+    try {
+      const raw = localStorage.getItem("omnicart_recently_viewed");
+      const parsed = raw ? JSON.parse(raw) : [];
+      const next = [String(productToShow.id), ...parsed.filter((x) => String(x) !== String(productToShow.id))].slice(0, 12);
+      localStorage.setItem("omnicart_recently_viewed", JSON.stringify(next));
+    } catch {
+      // no-op
+    }
+  }, [productToShow?.id]);
+
+  useEffect(() => {
     if (!productToShow?.categoryName) return;
     if (!products || products.length === 0) {
       dispatch(getAllProducts({ category: productToShow.categoryName }));

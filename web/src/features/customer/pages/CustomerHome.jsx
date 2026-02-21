@@ -17,6 +17,8 @@ import ErrorState from "../../../components/customer/ErrorState";
 import CategoryBanners from "../../../components/customer/CategoryBanners";
 import PromoAdsStrip from "../../../components/customer/PromoAdsStrip";
 import HeroCarousel from "../../../components/customer/HeroCarousel";
+import DealWidgets from "../../../components/customer/DealWidgets";
+import CategoryProductRows from "../../../components/customer/CategoryProductRows";
 import { getRoleHomePath } from "../../../utils/navigation";
 
 export default function CustomerHome() {
@@ -91,6 +93,25 @@ export default function CustomerHome() {
   }, [query]);
 
   useEffect(() => {
+    const preferredCategory = localStorage.getItem("omnicart_pref_category");
+    const preferredSort = localStorage.getItem("omnicart_pref_sort");
+    if (!preferredCategory && !preferredSort) return;
+
+    setFilters((prev) => {
+      const nextFilters = {
+        ...prev,
+        search: "",
+        category: preferredCategory || "",
+        sort: preferredSort || "",
+      };
+      dispatch(getAllProducts(nextFilters));
+      return nextFilters;
+    });
+    localStorage.removeItem("omnicart_pref_category");
+    localStorage.removeItem("omnicart_pref_sort");
+  }, [dispatch]);
+
+  useEffect(() => {
     if (isSearchMode) {
       setShowTopSections(false);
       return;
@@ -117,6 +138,17 @@ export default function CustomerHome() {
     () => new Set((wishlistItems || []).map((i) => String(i.productId))),
     [wishlistItems]
   );
+
+  const recentlyViewedProducts = useMemo(() => {
+    try {
+      const raw = localStorage.getItem("omnicart_recently_viewed");
+      const ids = raw ? JSON.parse(raw) : [];
+      const byId = new Map((products || []).map((p) => [String(p.id), p]));
+      return ids.map((id) => byId.get(String(id))).filter(Boolean).slice(0, 10);
+    } catch {
+      return [];
+    }
+  }, [products]);
 
   const updateFilter = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -249,8 +281,29 @@ export default function CustomerHome() {
       {!isSearchMode && showTopSections && (
         <HeroCarousel ads={ads} onSlideAction={handleAdClick} locationLabel={deliveryLocation} />
       )}
+      {!isSearchMode && showTopSections && <DealWidgets products={products} />}
       {!isSearchMode && showTopSections && <PromoAdsStrip ads={ads} onAdClick={handleAdClick} />}
       {!isSearchMode && showTopSections && <CategoryBanners onPickCategory={handlePickCategory} />}
+      {!isSearchMode && showTopSections && (
+        <CategoryProductRows products={products} onCategoryPick={handlePickCategory} />
+      )}
+      {!isSearchMode && showTopSections && recentlyViewedProducts.length > 0 && (
+        <section className="rounded-card border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="mb-3 text-lg font-bold text-slate-900 dark:text-slate-100">Continue Shopping</h2>
+          <div className="flex gap-3 overflow-x-auto pb-1">
+            {recentlyViewedProducts.map((product) => (
+              <Link
+                key={`rv-${product.id}`}
+                to={`/product/${product.id}`}
+                className="min-w-[170px] rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+              >
+                <img src={product.imageUrl || "/placeholder.jpg"} alt={product.name} className="h-24 w-full rounded-lg bg-slate-100 object-cover dark:bg-slate-950" />
+                <p className="mt-2 line-clamp-2 text-xs font-semibold text-slate-700 dark:text-slate-200">{product.name}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {showFilterBar && (
         <FilterBar
@@ -260,6 +313,8 @@ export default function CustomerHome() {
           onChange={updateFilter}
           onApply={applyFilters}
           onReset={resetFilters}
+          compact
+          resultCount={Array.isArray(products) ? products.length : 0}
         />
       )}
 

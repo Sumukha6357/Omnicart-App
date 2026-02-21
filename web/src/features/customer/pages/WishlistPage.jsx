@@ -1,20 +1,26 @@
-﻿import React, { useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { fetchWishlist } from "../../../redux/wishlistSlice";
 import { removeFromWishlist } from "../../../api/wishlistApi";
 import { addItem } from "../../../redux/cartSlice";
-import { Link } from "react-router-dom";
+import { ToastContext } from "../../../context/ToastContext";
+import CustomerPageShell from "../../../components/customer/CustomerPageShell";
+import { formatInr } from "../../../utils/formatters";
 
 const WishlistPage = () => {
   const dispatch = useDispatch();
-  const { items } = useSelector((state) => state.wishlist);
-  const user = JSON.parse(localStorage.getItem('user'));
+  const navigate = useNavigate();
+  const { showToast } = useContext(ToastContext);
+  const { items = [] } = useSelector((state) => state.wishlist);
+  const user = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user"));
+    } catch {
+      return null;
+    }
+  })();
   const userId = user?.id;
-
-  // Log items for debugging
-  useEffect(() => {
-    console.log("Wishlist items:", items);
-  }, [items]);
 
   useEffect(() => {
     if (userId) {
@@ -26,83 +32,81 @@ const WishlistPage = () => {
     try {
       await removeFromWishlist(userId, productId);
       dispatch(fetchWishlist(userId));
-    } catch (error) {
-      console.error("Failed to remove item:", error);
+      showToast("Removed from wishlist.", "info");
+    } catch {
+      showToast("Failed to remove item.", "error");
     }
   };
 
-  const handleAddToCart = (productId) => {
+  const handleAddToCart = async (productId) => {
     if (!userId) {
-      alert("You must be logged in to add to cart.");
+      showToast("Please login first.", "info");
+      navigate("/login");
       return;
     }
-    dispatch(addItem({ userId, productId, quantity: 1 }));
+    await dispatch(addItem({ userId, productId, quantity: 1 }));
+    showToast("Added to cart.", "success");
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-        <Link to="/customer/home" className="hover:text-blue-600">Customer</Link>
-        <span className="mx-2">/</span>
-        <span>Wishlist</span>
-      </div>
-
-      <div className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-xl shadow-sm p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold">My Wishlist</h2>
-            <p className="text-sm text-gray-600 dark:text-slate-300">
-              Items you have saved for later.
-            </p>
-          </div>
+    <CustomerPageShell
+      userRole={user?.role}
+      pageLabel="Wishlist"
+      title="My Wishlist"
+      subtitle="Items you've saved for later"
+      actions={
+        <span className="rounded-pill border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+          {items.length} items
+        </span>
+      }
+    >
+      {items.length === 0 ? (
+        <div className="rounded-card border border-dashed border-slate-300 bg-white p-10 text-center dark:border-slate-700 dark:bg-slate-900">
+          <p className="text-base font-semibold text-slate-700 dark:text-slate-200">Your wishlist is empty.</p>
+          <button
+            type="button"
+            onClick={() => navigate("/customer/home")}
+            className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+          >
+            Start Shopping
+          </button>
         </div>
-
-        {items.length === 0 ? (
-          <div className="text-gray-600 dark:text-slate-300">
-            Your wishlist is empty.
-          </div>
-        ) : (
-          <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((item) => (
-              <li
-                key={item.productId}
-                className="bg-gray-50 dark:bg-slate-950 border dark:border-slate-800 rounded-lg p-4 flex flex-col"
-              >
-                {item.imageUrl && (
-                  <img
-                    src={item.imageUrl}
-                    alt={item.name}
-                    className="w-full h-40 object-cover mb-3 rounded"
-                  />
-                )}
-                <h3 className="text-lg font-semibold">{item.name}</h3>
-                <p className="text-sm text-gray-600 dark:text-slate-300">
-                  Price: Rs. {item.price}
-                </p>
-
-                <div className="flex gap-2 mt-4">
-                  <button
-                    onClick={() => handleRemove(item.productId)}
-                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
-                  >
-                    Remove
-                  </button>
-                  <button
-                    onClick={() => handleAddToCart(item.productId)}
-                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-                  >
-                    Add to Cart
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
+      ) : (
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {items.map((item) => (
+            <li
+              key={item.productId}
+              className="rounded-card border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            >
+              <img
+                src={item.imageUrl || "/placeholder.jpg"}
+                alt={item.name || "Product"}
+                className="h-44 w-full rounded-lg bg-slate-100 object-cover dark:bg-slate-950"
+              />
+              <h3 className="mt-3 line-clamp-2 min-h-12 text-base font-bold text-slate-900 dark:text-slate-100">
+                {item.name || "Unnamed Product"}
+              </h3>
+              <p className="mt-1 text-sm font-semibold text-slate-700 dark:text-slate-200">{formatInr(item.price)}</p>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => handleRemove(item.productId)}
+                  className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700"
+                >
+                  Remove
+                </button>
+                <button
+                  onClick={() => handleAddToCart(item.productId)}
+                  className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                >
+                  Add to Cart
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </CustomerPageShell>
   );
 };
 
 export default WishlistPage;
-
-
