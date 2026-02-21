@@ -50,12 +50,12 @@ export default function AppRoutes() {
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/contact" element={<ContactUs />} />
-      <Route path="/cart" element={<Cart />} />
-      <Route path="/checkout" element={<Checkout />} />
-      <Route path="/payment" element={<Payment />} />
-      <Route path="/order-success" element={<OrderSuccess />} />
-      <Route path="/orders" element={<OrderHistory />} />
-      <Route path="/track-order" element={<TrackOrder />} />
+      <Route path="/cart" element={<ProtectedRoute role="customer"><Cart /></ProtectedRoute>} />
+      <Route path="/checkout" element={<ProtectedRoute role="customer"><Checkout /></ProtectedRoute>} />
+      <Route path="/payment" element={<ProtectedRoute role="customer"><Payment /></ProtectedRoute>} />
+      <Route path="/order-success" element={<ProtectedRoute role="customer"><OrderSuccess /></ProtectedRoute>} />
+      <Route path="/orders" element={<ProtectedRoute role="customer"><OrderHistory /></ProtectedRoute>} />
+      <Route path="/track-order" element={<ProtectedRoute role="customer"><TrackOrder /></ProtectedRoute>} />
 
 
       {/* Customer Routes */}

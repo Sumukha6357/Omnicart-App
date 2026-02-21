@@ -62,10 +62,10 @@ export default function CustomerHome() {
       <div className="marketplace-panel flex items-center justify-between p-5">
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Customer Zone</p>
-          <h1 className="text-2xl font-extrabold text-slate-900">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">
             Welcome back{user?.name ? `, ${user.name}` : ""}.
           </h1>
-          <p className="mt-1 text-sm text-slate-600">Your feed is tuned for quick reorders and new arrivals.</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Your feed is tuned for quick reorders and new arrivals.</p>
         </div>
         <Link to="/orders" className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-600">
           View Orders
@@ -81,7 +81,7 @@ export default function CustomerHome() {
       />
 
       {loading ? (
-        <p className="py-12 text-center text-lg font-semibold text-slate-600">Loading products...</p>
+        <p className="py-12 text-center text-lg font-semibold text-slate-600 dark:text-slate-300">Loading products...</p>
       ) : error ? (
         <p className="py-12 text-center text-lg font-semibold text-red-600">{error}</p>
       ) : (
@@ -94,7 +94,7 @@ export default function CustomerHome() {
                     <img
                       src={product.imageUrl || "/placeholder.jpg"}
                       alt={product.name || "Product"}
-                      className="h-44 w-full rounded-xl bg-slate-50 object-cover"
+                      className="h-44 w-full rounded-xl bg-slate-50 object-cover dark:bg-slate-950"
                     />
                   </Link>
                   <button
@@ -107,7 +107,7 @@ export default function CustomerHome() {
                     className={`absolute right-2 top-2 rounded-full p-2 shadow ${
                       wishlistItems?.some((i) => String(i.productId) === String(product.id))
                         ? "bg-rose-500 text-white"
-                        : "bg-white text-rose-500"
+                        : "bg-white text-rose-500 dark:bg-slate-900 dark:text-rose-300"
                     }`}
                   >
                     <Heart
@@ -121,8 +121,8 @@ export default function CustomerHome() {
                 </div>
 
                 <Link to={`/product/${product.id}`}>
-                  <h3 className="mt-3 line-clamp-1 text-lg font-bold text-slate-900">{product.name || "Unnamed Product"}</h3>
-                  <p className="text-sm text-slate-500">{product.categoryName || "Uncategorized"}</p>
+                  <h3 className="mt-3 line-clamp-1 text-lg font-bold text-slate-900 dark:text-slate-100">{product.name || "Unnamed Product"}</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{product.categoryName || "Uncategorized"}</p>
                   <p className="mt-2 text-lg font-extrabold text-emerald-600">{formatPrice(product.price)}</p>
                 </Link>
 
@@ -146,7 +146,7 @@ export default function CustomerHome() {
               </div>
             ))
           ) : (
-            <p className="col-span-full py-12 text-center text-slate-500">No products found.</p>
+            <p className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400">No products found.</p>
           )}
         </div>
       )}

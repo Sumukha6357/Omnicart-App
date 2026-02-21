@@ -9,14 +9,14 @@ const ProductFilters = ({
 }) => {
   return (
     <div className="marketplace-panel mb-6 p-4">
-      <h3 className="mb-3 text-sm font-semibold text-slate-700">
+      <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
         Apply Filters
       </h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <select
           value={filters.category}
           onChange={(e) => onChange("category", e.target.value)}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         >
           <option value="">All Categories</option>
           {categories.map((c) => (
@@ -31,7 +31,7 @@ const ProductFilters = ({
           placeholder="Min price"
           value={filters.minPrice}
           onChange={(e) => onChange("minPrice", e.target.value)}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         />
 
         <input
@@ -39,13 +39,13 @@ const ProductFilters = ({
           placeholder="Max price"
           value={filters.maxPrice}
           onChange={(e) => onChange("maxPrice", e.target.value)}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         />
 
         <select
           value={filters.minRating}
           onChange={(e) => onChange("minRating", e.target.value)}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         >
           <option value="">Any Rating</option>
           <option value="4">4+ stars</option>
@@ -57,7 +57,7 @@ const ProductFilters = ({
         <select
           value={filters.sort}
           onChange={(e) => onChange("sort", e.target.value)}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         >
           <option value="">Sort</option>
           <option value="newest">Newest</option>
@@ -77,7 +77,7 @@ const ProductFilters = ({
         </button>
         <button
           onClick={onReset}
-          className="rounded-lg bg-slate-100 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-200"
+          className="rounded-lg bg-slate-100 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
           Reset
         </button>

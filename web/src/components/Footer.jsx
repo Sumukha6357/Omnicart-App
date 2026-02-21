@@ -29,13 +29,13 @@ const Footer = () => {
   };
 
   return (
-    <footer className="mt-auto border-t border-slate-200/80 bg-white/95">
+    <footer className="mt-auto border-t border-slate-200/80 bg-white/95 dark:border-slate-800 dark:bg-slate-950/90">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid gap-6 md:grid-cols-[1.4fr,1fr] md:items-center">
           <div>
             <p className="marketplace-chip mb-3">OmniCart Marketplace</p>
-            <h2 className="text-2xl font-extrabold text-slate-900">Bright deals, real-time drops.</h2>
-            <p className="mt-2 text-sm text-slate-600">
+            <h2 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">Bright deals, real-time drops.</h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               Subscribe for launch deals and restock alerts.
             </p>
           </div>
@@ -45,7 +45,7 @@ const Footer = () => {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-500/30"
             />
             <button
               type="submit"
@@ -63,12 +63,12 @@ const Footer = () => {
           </p>
         )}
 
-        <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 pt-4 text-sm text-slate-600 sm:flex-row">
+        <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 pt-4 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300 sm:flex-row">
           <p>(c) {new Date().getFullYear()} OmniCart. All rights reserved.</p>
           <div className="flex items-center gap-4 font-semibold">
-            <Link to="/privacy" className="hover:text-blue-700">Privacy</Link>
-            <Link to="/terms" className="hover:text-blue-700">Terms</Link>
-            <Link to="/contact" className="hover:text-blue-700">Contact</Link>
+            <Link to="/privacy" className="hover:text-blue-700 dark:hover:text-blue-300">Privacy</Link>
+            <Link to="/terms" className="hover:text-blue-700 dark:hover:text-blue-300">Terms</Link>
+            <Link to="/contact" className="hover:text-blue-700 dark:hover:text-blue-300">Contact</Link>
           </div>
         </div>
       </div>

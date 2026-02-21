@@ -58,7 +58,7 @@ export default function Home() {
 
   const topDeals = useMemo(() => (Array.isArray(products) ? products.slice(0, 3) : []), [products]);
 
-  if (loading) return <p className="py-16 text-center text-lg font-semibold text-slate-600">Loading products...</p>;
+  if (loading) return <p className="py-16 text-center text-lg font-semibold text-slate-600 dark:text-slate-300">Loading products...</p>;
   if (error) return <p className="py-16 text-center text-lg font-semibold text-red-600">{error}</p>;
 
   return (
@@ -78,8 +78,8 @@ export default function Home() {
           {topDeals.map((deal) => (
             <Link key={deal.id} to={`/product/${deal.id}`} className="marketplace-panel p-4 transition hover:-translate-y-0.5 hover:shadow-lg">
               <p className="text-xs font-bold uppercase tracking-wide text-orange-600">Top Deal</p>
-              <h3 className="mt-1 line-clamp-1 text-base font-bold text-slate-900">{deal.name}</h3>
-              <p className="mt-2 text-sm text-slate-500">{deal.categoryName || "General"}</p>
+              <h3 className="mt-1 line-clamp-1 text-base font-bold text-slate-900 dark:text-slate-100">{deal.name}</h3>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{deal.categoryName || "General"}</p>
               <p className="mt-3 text-xl font-extrabold text-emerald-600">{formatPrice(deal.price)}</p>
             </Link>
           ))}
@@ -95,7 +95,7 @@ export default function Home() {
       />
 
       <section>
-        <h2 className="mb-4 text-2xl font-extrabold text-slate-900">All Products</h2>
+        <h2 className="mb-4 text-2xl font-extrabold text-slate-900 dark:text-slate-100">All Products</h2>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
           {Array.isArray(products) && products.length > 0 ? (
             products.map((product) => (
@@ -105,13 +105,13 @@ export default function Home() {
                   alt={product.name || "Product"}
                   className="h-44 w-full rounded-xl bg-slate-50 object-cover"
                 />
-                <h3 className="mt-3 line-clamp-1 text-lg font-bold text-slate-900">{product.name || "Unnamed Product"}</h3>
-                <p className="text-sm text-slate-500">{product.categoryName || "Uncategorized"}</p>
+                <h3 className="mt-3 line-clamp-1 text-lg font-bold text-slate-900 dark:text-slate-100">{product.name || "Unnamed Product"}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{product.categoryName || "Uncategorized"}</p>
                 <p className="mt-2 text-lg font-extrabold text-emerald-600">{formatPrice(product.price)}</p>
                 <div className="mt-3 flex gap-2">
                   <Link
                     to={`/product/${product.id}`}
-                    className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200"
+                    className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                   >
                     View
                   </Link>
@@ -139,7 +139,7 @@ export default function Home() {
               </div>
             ))
           ) : (
-            <p className="col-span-full py-12 text-center text-slate-500">No products found.</p>
+            <p className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400">No products found.</p>
           )}
         </div>
       </section>
