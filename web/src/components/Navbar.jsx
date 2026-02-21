@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useContext, useState, useEffect } from "react";
-import { HeartIcon, ShoppingCart, Search, Moon, Sun, UserRound } from "lucide-react";
+import { HeartIcon, ShoppingCart, Search, Moon, Sun, UserRound, MapPin, Globe2 } from "lucide-react";
 import Profile from "./Profile";
 import { SearchContext } from "../context/SearchContext";
 import { ThemeContext } from "../context/ThemeContext";
@@ -22,6 +22,9 @@ const Navbar = () => {
   const { query, setQuery } = useContext(SearchContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
   const [showProfile, setShowProfile] = useState(false);
+  const [locationLabel, setLocationLabel] = useState(localStorage.getItem("omnicart_location") || "Bengaluru 562130");
+  const [region, setRegion] = useState(localStorage.getItem("omnicart_region") || "IN");
+  const [language, setLanguage] = useState(localStorage.getItem("omnicart_language") || "EN");
 
   useEffect(() => {
     const storedUser = (() => {
@@ -37,6 +40,12 @@ const Navbar = () => {
       dispatch(fetchCart({ userId }));
     }
   }, [dispatch, user?.id]);
+
+  useEffect(() => {
+    localStorage.setItem("omnicart_location", locationLabel);
+    localStorage.setItem("omnicart_region", region);
+    localStorage.setItem("omnicart_language", language);
+  }, [locationLabel, region, language]);
 
   const goRoleHome = () => {
     const role =
@@ -60,11 +69,27 @@ const Navbar = () => {
       <nav className="mx-auto flex w-full max-w-7xl items-center gap-3 px-3 py-3 sm:px-6" aria-label="Main navigation">
         <button
           onClick={goRoleHome}
-          className="rounded-lg bg-brand-600 px-3 py-2 text-base font-extrabold tracking-tight text-white transition hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          className="inline-flex h-10 items-center rounded-lg bg-brand-600 px-3 text-base font-extrabold tracking-tight text-white transition hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           aria-label="Go to home"
         >
           OmniCart
         </button>
+
+        {!isAuthPage && (
+          <button
+            type="button"
+            onClick={() => {
+              const next = window.prompt("Update delivery location", locationLabel);
+              if (next && next.trim()) setLocationLabel(next.trim());
+            }}
+            className="hidden items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 lg:inline-flex"
+            aria-label="Update delivery location"
+            title="Update delivery location"
+          >
+            <MapPin className="h-3.5 w-3.5 text-brand-600" />
+            <span className="max-w-[160px] truncate">{locationLabel}</span>
+          </button>
+        )}
 
         {!isAuthPage && (
           <div className="relative hidden flex-1 md:block">
@@ -82,6 +107,30 @@ const Navbar = () => {
 
         {!isAuthPage && (
           <div className="ml-auto flex items-center gap-2">
+            <div className="hidden items-center gap-1 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-900 md:flex">
+              <Globe2 className="h-3.5 w-3.5 text-slate-500" />
+              <select
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+                aria-label="Region"
+                className="bg-transparent font-semibold text-slate-700 outline-none dark:text-slate-200"
+              >
+                <option value="IN">IN</option>
+                <option value="US">US</option>
+                <option value="EU">EU</option>
+              </select>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                aria-label="Language"
+                className="bg-transparent font-semibold text-slate-700 outline-none dark:text-slate-200"
+              >
+                <option value="EN">EN</option>
+                <option value="HI">HI</option>
+                <option value="ES">ES</option>
+              </select>
+            </div>
+
             <button
               onClick={toggleTheme}
               title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
@@ -141,6 +190,22 @@ const Navbar = () => {
 
       {!isAuthPage && (
         <div className="mx-auto w-full max-w-7xl px-3 pb-3 md:hidden sm:px-6">
+          <div className="mb-2 flex items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-300">
+            <button
+              type="button"
+              onClick={() => {
+                const next = window.prompt("Update delivery location", locationLabel);
+                if (next && next.trim()) setLocationLabel(next.trim());
+              }}
+              className="inline-flex items-center gap-1 rounded-pill border border-slate-300 bg-white px-2 py-1 dark:border-slate-700 dark:bg-slate-900"
+            >
+              <MapPin className="h-3.5 w-3.5 text-brand-600" />
+              <span className="max-w-[160px] truncate">{locationLabel}</span>
+            </button>
+            <span className="rounded-pill border border-slate-300 bg-white px-2 py-1 dark:border-slate-700 dark:bg-slate-900">
+              {region} | {language}
+            </span>
+          </div>
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input

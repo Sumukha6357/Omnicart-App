@@ -3,6 +3,7 @@ export const sidebarMenus = {
     { label: "Dashboard", path: "/admin/dashboard" },
     { label: "Orders", path: "/admin/orders" },
     { label: "Products", path: "/admin/products" },
+    { label: "Ads", path: "/admin/ads" },
     { label: "Users", path: "/admin/users" },
   ],
   seller: [

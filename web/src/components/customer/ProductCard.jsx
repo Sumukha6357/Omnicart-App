@@ -3,6 +3,12 @@ import { Heart, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatInr } from "../../utils/formatters";
 
+const IMAGE_FALLBACK =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='750'><rect width='100%' height='100%' fill='#e2e8f0'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#64748b' font-size='28' font-family='Arial'>OmniCart</text></svg>`
+  );
+
 const ProductCard = ({
   product,
   isWishlisted,
@@ -13,6 +19,7 @@ const ProductCard = ({
   isTogglingWishlist,
 }) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [imgSrc, setImgSrc] = useState(product.imageUrl || IMAGE_FALLBACK);
   const ratingValue = Number(product?.rating || 0);
   const reviewCount = Array.isArray(product?.reviews) ? product.reviews.length : 0;
 
@@ -25,10 +32,16 @@ const ProductCard = ({
         >
           {!isImageLoaded && <div className="h-full w-full animate-pulse bg-slate-200 dark:bg-slate-800" />}
           <img
-            src={product.imageUrl || "/placeholder.jpg"}
+            src={imgSrc}
             alt={product.name || "Product"}
             loading="lazy"
             onLoad={() => setIsImageLoaded(true)}
+            onError={() => {
+              if (imgSrc !== IMAGE_FALLBACK) {
+                setImgSrc(IMAGE_FALLBACK);
+              }
+              setIsImageLoaded(true);
+            }}
             className={`h-full w-full object-cover transition duration-300 group-hover:scale-[1.02] ${isImageLoaded ? "block" : "hidden"}`}
           />
         </Link>

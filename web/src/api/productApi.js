@@ -4,6 +4,17 @@ const DUMMY_PRODUCTS_URL = "https://dummyjson.com/products?limit=200";
 const CUSTOM_PRODUCTS_KEY = "omnicart_custom_products";
 const DELETED_PRODUCTS_KEY = "omnicart_deleted_product_ids";
 
+const normalizeReviews = (reviews) => {
+  if (!Array.isArray(reviews)) return [];
+  return reviews.map((review, index) => ({
+    id: review.id ?? `review-${index}`,
+    name: review.name ?? review.reviewerName ?? "Verified Buyer",
+    text: review.text ?? review.comment ?? "",
+    rating: Number(review.rating ?? 0),
+    date: review.date ?? null,
+  }));
+};
+
 const toUiProduct = (p) => ({
   id: String(p.id),
   name: p.name ?? p.title ?? "Unnamed Product",
@@ -16,7 +27,7 @@ const toUiProduct = (p) => ({
   sellerId: p.sellerId ?? `dummy-seller-${(Number(p.id) % 3) + 1}`,
   sellerName: p.sellerName ?? "Dummy Seller",
   brand: p.brand ?? "",
-  reviews: Array.isArray(p.reviews) ? p.reviews : [],
+  reviews: normalizeReviews(p.reviews),
   createdAt: p.createdAt ?? new Date().toISOString(),
   popularity: Number(p.popularity ?? p.rating ?? 0),
 });

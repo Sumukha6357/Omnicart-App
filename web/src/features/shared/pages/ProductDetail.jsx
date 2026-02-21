@@ -4,9 +4,10 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { addWishlistItem } from "../../../redux/wishlistSlice";
 import { getAllProducts, getProductById } from "../../../redux/productSlice";
 import { addItem, fetchCart } from "../../../redux/cartSlice";
-import { Heart } from "lucide-react";
+import { Heart, Star } from "lucide-react";
 import Breadcrumbs from "../../../components/Breadcrumbs";
 import { ToastContext } from "../../../context/ToastContext";
+import { getRoleHomePath } from "../../../utils/navigation";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -15,6 +16,8 @@ export default function ProductDetail() {
   const { product, products, loading } = useSelector((state) => state.product);
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
   const [quantity, setQuantity] = useState(1);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [imgSrc, setImgSrc] = useState("");
   const { showToast } = useContext(ToastContext);
 
   useEffect(() => {
@@ -23,6 +26,16 @@ export default function ProductDetail() {
   }, [id, dispatch]);
 
   const productToShow = product;
+  const imageFallback =
+    "data:image/svg+xml;utf8," +
+    encodeURIComponent(
+      `<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><rect width='100%' height='100%' fill='#e2e8f0'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#64748b' font-size='30' font-family='Arial'>OmniCart</text></svg>`
+    );
+
+  useEffect(() => {
+    setImgSrc(productToShow?.imageUrl || imageFallback);
+    setIsImageLoaded(false);
+  }, [productToShow?.imageUrl]);
 
   useEffect(() => {
     if (!productToShow?.categoryName) return;
@@ -81,6 +94,7 @@ export default function ProductDetail() {
   };
 
   const categoryName = productToShow?.categoryName;
+  const homePath = getRoleHomePath(JSON.parse(localStorage.getItem("user") || "null")?.role);
   const recommendations = (products || [])
     .filter((p) => p?.id !== productToShow?.id)
     .filter((p) => {
@@ -95,8 +109,8 @@ export default function ProductDetail() {
       <div className="mx-auto max-w-6xl">
         <Breadcrumbs
           items={[
-            { label: "Home", to: "/" },
-            { label: productToShow?.categoryName || "Products", to: "/" },
+            { label: "Home", to: homePath },
+            { label: productToShow?.categoryName || "Products", to: homePath },
             { label: productToShow?.name || "Detail" },
           ]}
         />
@@ -111,10 +125,20 @@ export default function ProductDetail() {
         <div className="marketplace-panel p-6 md:p-8">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             <div className="relative">
+              {!isImageLoaded && (
+                <div className="h-80 w-full animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+              )}
               <img
-                src={productToShow.imageUrl || "/placeholder.jpg"}
+                src={imgSrc}
                 alt={productToShow.name}
-                className="h-80 w-full rounded-xl bg-gray-50 object-contain dark:bg-slate-950"
+                onLoad={() => setIsImageLoaded(true)}
+                onError={() => {
+                  if (imgSrc !== imageFallback) {
+                    setImgSrc(imageFallback);
+                  }
+                  setIsImageLoaded(true);
+                }}
+                className={`h-80 w-full rounded-xl bg-gray-50 object-contain dark:bg-slate-950 ${isImageLoaded ? "block" : "hidden"}`}
               />
               <button
                 onClick={handleAddToWishlist}
@@ -294,12 +318,19 @@ export default function ProductDetail() {
           ) : (
             <div className="space-y-4">
               {reviewsToShow.map((review) => (
-                <div key={review.id} className="rounded-lg border p-4 dark:border-slate-800">
+                <div key={review.id || review.comment || review.text} className="rounded-lg border p-4 dark:border-slate-800">
                   <div className="mb-2 flex items-center justify-between">
-                    <div className="font-semibold">{review.name}</div>
-                    <div className="text-sm text-yellow-600">{"?".repeat(review.rating)}</div>
+                    <div className="font-semibold">
+                      {review.name || review.reviewerName || "Verified Buyer"}
+                    </div>
+                    <div className="inline-flex items-center gap-1 text-sm text-yellow-600">
+                      <Star className="h-4 w-4 fill-current" />
+                      {Number(review.rating || 0).toFixed(1)}
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-700 dark:text-slate-300">{review.text}</div>
+                  <div className="text-sm text-gray-700 dark:text-slate-300">
+                    {review.text || review.comment || "No written review provided."}
+                  </div>
                 </div>
               ))}
             </div>

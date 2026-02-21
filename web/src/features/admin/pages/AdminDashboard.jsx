@@ -23,6 +23,9 @@ export default function AdminDashboard() {
         <Link to="/admin/products" className="dashboard-card">
           Manage Products
         </Link>
+        <Link to="/admin/ads" className="dashboard-card">
+          Manage Ads
+        </Link>
         <Link to="/admin/orders" className="dashboard-card">
           View All Orders
         </Link>

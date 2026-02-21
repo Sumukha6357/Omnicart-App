@@ -25,6 +25,7 @@ import AdminOrders from "../features/admin/pages/AdminOrders"
 import AdminInventory from "../features/admin/pages/AdminInventory"
 import AdminWarehouses from "../features/admin/pages/AdminWarehouses"
 import AdminShipments from "../features/admin/pages/AdminShipments"
+import AdminAds from "../features/admin/pages/AdminAds"
 import EditProduct from "../features/seller/pages/EditProduct"
 
 import SellerDashboard from "../features/seller/pages/SellerDashboard"
@@ -70,6 +71,7 @@ export default function AppRoutes() {
       <Route path="/admin/add-category" element={<ProtectedRoute role="admin"><AddCategory /></ProtectedRoute>} />
       <Route path="/admin/products" element={<ProtectedRoute role="admin"><AdminProducts /></ProtectedRoute>} />
       <Route path="/admin/orders" element={<ProtectedRoute role="admin"><AdminOrders /></ProtectedRoute>} />
+      <Route path="/admin/ads" element={<ProtectedRoute role="admin"><AdminAds /></ProtectedRoute>} />
       <Route path="/admin/shipments" element={<ProtectedRoute role="admin"><AdminShipments /></ProtectedRoute>} />
       <Route path="/admin/inventory" element={<ProtectedRoute role="admin"><AdminInventory /></ProtectedRoute>} />
       <Route path="/admin/warehouses" element={<ProtectedRoute role="admin"><AdminWarehouses /></ProtectedRoute>} />
