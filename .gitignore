@@ -1,20 +1,34 @@
-# Ignore IntelliJ files
-.idea/
-*.iml
-
-# Ignore VS Code settings
-.vscode/
-
-# Ignore build artifacts
-omnicart-backend/target/
-omnicart-frontend/node_modules/
-
+# Environment files
 .env
 .env.local
 .env.docker
-target/
-*.iml
-*.class
+
+# IDE/editor
 .idea/
 .vscode/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Java / Maven
+target/
+api/target/
+*.class
+
+# Node / frontend
+node_modules/
+web/node_modules/
+web/dist/
+
+# Legacy folders (old structure)
+omnicart-backend/
+omnicart-frontend/

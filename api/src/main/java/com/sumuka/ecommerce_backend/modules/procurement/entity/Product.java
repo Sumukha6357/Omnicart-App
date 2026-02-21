@@ -1,0 +1,47 @@
+package com.sumuka.ecommerce_backend.modules.procurement.entity;
+
+import com.sumuka.ecommerce_backend.modules.user.entity.User;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Product {
+
+    @Id
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;
+
+    private String name;
+    private String description;
+    private BigDecimal price;
+    private Integer quantity;
+    private String imageUrl;
+    private LocalDateTime createdAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_id", nullable = false)
+    private User seller;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
+    @PrePersist
+    public void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
+}

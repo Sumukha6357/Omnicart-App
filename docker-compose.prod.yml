@@ -1,0 +1,64 @@
+name: omnicart-prod
+
+services:
+  db:
+    image: postgres:15
+    container_name: omnicart-db-prod
+    restart: always
+    environment:
+      POSTGRES_DB: omnicart_db
+      POSTGRES_USER: ${POSTGRES_USER:-sumuka}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sumuka} -d omnicart_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    container_name: omnicart-redis-prod
+    restart: always
+
+  backend:
+    image: ${DOCKERHUB_USERNAME:-sumukha6357}/omnicart-backend:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    container_name: omnicart-api-prod
+    restart: always
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/omnicart_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-sumuka}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "8080:8080"
+
+  web:
+    image: ${DOCKERHUB_USERNAME:-sumukha6357}/omnicart-web:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      args:
+        VITE_BACKEND_URL: http://backend:8080
+    container_name: omnicart-web-prod
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  pgdata_prod:

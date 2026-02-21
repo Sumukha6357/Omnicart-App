@@ -1,9 +1,9 @@
-name: omnicart-local
+name: omnicart-dev
 
 services:
   db:
     image: postgres:15
-    container_name: omnicart-db-local
+    container_name: omnicart-db-dev
     restart: unless-stopped
     environment:
       POSTGRES_DB: omnicart_db
@@ -12,7 +12,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata_local:/var/lib/postgresql/data
+      - pgdata_dev:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U sumuka -d omnicart_db"]
       interval: 10s
@@ -21,22 +21,16 @@ services:
 
   redis:
     image: redis:7
-    container_name: omnicart-redis-local
+    container_name: omnicart-redis-dev
     restart: unless-stopped
     ports:
       - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   backend:
-    build:
-      context: .
-      dockerfile: docker/api.Dockerfile
-    container_name: omnicart-api-local
-    restart: on-failure
+    image: maven:3.9.9-eclipse-temurin-17
+    container_name: omnicart-api-dev
+    working_dir: /app
+    command: sh -c "chmod +x ./mvnw && ./mvnw spring-boot:run -DskipTests"
     env_file:
       - .env.docker
     environment:
@@ -46,26 +40,33 @@ services:
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
+    volumes:
+      - ./api:/app
+      - m2_cache:/root/.m2
     depends_on:
       db:
         condition: service_healthy
       redis:
-        condition: service_healthy
+        condition: service_started
     ports:
       - "8080:8080"
 
   web:
-    build:
-      context: .
-      dockerfile: docker/web.Dockerfile
-      args:
-        VITE_BACKEND_URL: http://backend:8080
-    container_name: omnicart-web-local
-    restart: on-failure
+    image: node:20-alpine
+    container_name: omnicart-web-dev
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
+    environment:
+      VITE_BACKEND_URL: http://backend:8080
+    volumes:
+      - ./web:/app
+      - web_node_modules:/app/node_modules
     depends_on:
       - backend
     ports:
-      - "3000:80"
+      - "5173:5173"
 
 volumes:
-  pgdata_local:
+  pgdata_dev:
+  m2_cache:
+  web_node_modules:
