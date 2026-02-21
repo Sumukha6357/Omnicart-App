@@ -73,11 +73,20 @@ public class JwtTokenProvider {
         }
 
         try {
+            byte[] decoded = Decoders.BASE64URL.decode(secret);
+            if (decoded.length >= 64) {
+                return decoded;
+            }
+        } catch (RuntimeException ignored) {
+            // Try standard base64 next; fallback to hashing if that also fails.
+        }
+
+        try {
             byte[] decoded = Decoders.BASE64.decode(secret);
             if (decoded.length >= 64) {
                 return decoded;
             }
-        } catch (IllegalArgumentException ignored) {
+        } catch (RuntimeException ignored) {
             // Fallback to hashing the raw secret below.
         }
 
