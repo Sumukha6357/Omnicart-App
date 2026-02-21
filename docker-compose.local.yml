@@ -52,7 +52,7 @@ services:
       redis:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      - "5062:8080"
 
   web:
     build:
