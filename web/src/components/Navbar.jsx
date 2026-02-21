@@ -1,12 +1,15 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useContext, useState, useEffect } from "react";
-import { HeartIcon, ShoppingCart, Search, Moon, Sun } from "lucide-react";
+import { HeartIcon, ShoppingCart, Search, Moon, Sun, UserRound } from "lucide-react";
 import Profile from "./Profile";
 import { SearchContext } from "../context/SearchContext";
 import { ThemeContext } from "../context/ThemeContext";
 import { fetchWishlist } from "../redux/wishlistSlice";
 import { fetchCart } from "../redux/cartSlice";
+
+const iconBtnClass =
+  "inline-flex h-10 w-10 items-center justify-center rounded-pill border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800";
 
 const Navbar = () => {
   const location = useLocation();
@@ -36,13 +39,15 @@ const Navbar = () => {
   }, [dispatch, user?.id]);
 
   const goRoleHome = () => {
-    const role = (user?.role || (() => {
-      try {
-        return JSON.parse(localStorage.getItem("user"))?.role;
-      } catch {
-        return null;
-      }
-    })() || "").toLowerCase();
+    const role =
+      (user?.role ||
+        (() => {
+          try {
+            return JSON.parse(localStorage.getItem("user"))?.role;
+          } catch {
+            return null;
+          }
+        })() || "").toLowerCase();
 
     if (role === "admin") return navigate("/admin/dashboard", { replace: true });
     if (role === "seller") return navigate("/seller/dashboard", { replace: true });
@@ -51,43 +56,46 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
-      <div className="mx-auto flex w-full max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
+      <nav className="mx-auto flex w-full max-w-7xl items-center gap-3 px-3 py-3 sm:px-6" aria-label="Main navigation">
         <button
           onClick={goRoleHome}
-          className="rounded-lg bg-gradient-to-r from-blue-600 to-orange-500 px-3 py-1.5 text-lg font-extrabold tracking-tight text-white"
+          className="rounded-lg bg-brand-600 px-3 py-2 text-base font-extrabold tracking-tight text-white transition hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          aria-label="Go to home"
         >
           OmniCart
         </button>
 
         {!isAuthPage && (
           <div className="relative hidden flex-1 md:block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
-              type="text"
-              placeholder="Search products, categories and offers"
+              type="search"
+              aria-label="Search products"
+              placeholder="Search for products, brands and more"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full rounded-full border border-slate-300 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-500/30"
+              className="h-11 w-full rounded-pill border border-slate-300 bg-slate-50 pl-11 pr-4 text-sm text-slate-800 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
             />
           </div>
         )}
 
         {!isAuthPage && (
-          <div className="flex items-center gap-3">
+          <div className="ml-auto flex items-center gap-2">
             <button
               onClick={toggleTheme}
               title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-              className="rounded-full border border-slate-300 bg-slate-100 p-2 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              aria-label="Toggle theme"
+              className={iconBtnClass}
             >
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
 
             {user && user.role?.toLowerCase() === "customer" && (
-              <Link to="/wishlist" title="Wishlist" className="relative rounded-full bg-rose-50 p-2 text-rose-600 hover:bg-rose-100 dark:bg-rose-900/25 dark:text-rose-300 dark:hover:bg-rose-900/40">
-                <HeartIcon className="h-5 w-5" />
+              <Link to="/wishlist" title="Wishlist" aria-label="Wishlist" className={iconBtnClass + " relative"}>
+                <HeartIcon className="h-4 w-4" />
                 {wishlistItems?.length > 0 && (
-                  <span className="absolute -right-1 -top-1 rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">
+                  <span className="absolute -right-1 -top-1 min-w-4 rounded-pill bg-rose-500 px-1 text-[10px] font-bold text-white">
                     {wishlistItems.length}
                   </span>
                 )}
@@ -97,59 +105,58 @@ const Navbar = () => {
             {user && user.role?.toLowerCase() === "customer" && (
               <button
                 onClick={() => navigate("/cart")}
-                className="relative flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-2 text-sm font-bold text-white hover:bg-emerald-700"
+                aria-label="Open cart"
+                className="inline-flex h-10 items-center gap-1.5 rounded-pill bg-emerald-600 px-3 text-sm font-semibold text-white transition hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
               >
                 <ShoppingCart className="h-4 w-4" />
-                Cart
+                <span className="hidden sm:inline">Cart</span>
                 {cartItems?.length > 0 && (
-                  <span className="rounded-full bg-white px-1.5 text-[10px] font-bold text-emerald-700 dark:bg-slate-950 dark:text-emerald-300">
-                    {cartItems.length}
-                  </span>
+                  <span className="rounded-pill bg-white px-1 text-[10px] font-bold text-emerald-700">{cartItems.length}</span>
                 )}
               </button>
             )}
 
             {token ? (
               <button
-                className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1.5 text-sm font-bold text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+                className={iconBtnClass}
                 onClick={() => setShowProfile(true)}
                 title={user?.name || "Profile"}
+                aria-label="Open profile"
               >
-                {user?.name
-                  ? user.name.length <= 10
-                    ? user.name
-                    : user.name.split(/\s+/).map((n) => n[0]?.toUpperCase()).join("")
-                  : "P"}
+                <UserRound className="h-4 w-4" />
               </button>
             ) : (
               <>
-                <Link to="/login" className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                <Link to="/login" className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700">
                   Login
                 </Link>
-                <Link to="/signup" className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600">
+                <Link to="/signup" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">
                   Sign Up
                 </Link>
               </>
             )}
           </div>
         )}
-      </div>
+      </nav>
+
       {!isAuthPage && (
-        <div className="mx-auto w-full max-w-7xl px-4 pb-3 md:hidden sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-7xl px-3 pb-3 md:hidden sm:px-6">
           <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
-              type="text"
-              placeholder="Search products"
+              type="search"
+              aria-label="Search products"
+              placeholder="Search for products"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full rounded-full border border-slate-300 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-500/30"
+              className="h-11 w-full rounded-pill border border-slate-300 bg-slate-50 pl-11 pr-4 text-sm text-slate-800 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
             />
           </div>
         </div>
       )}
+
       {showProfile && <Profile onClose={() => setShowProfile(false)} />}
-    </nav>
+    </header>
   );
 };
 

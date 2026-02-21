@@ -1,15 +1,18 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart } from "lucide-react";
-import { addWishlistItem } from "../../../redux/wishlistSlice";
+import { addWishlistItem, fetchWishlist } from "../../../redux/wishlistSlice";
 import { getAllProducts } from "../../../redux/productSlice";
-import { addItem } from "../../../redux/cartSlice";
+import { addItem, fetchCart } from "../../../redux/cartSlice";
 import { fetchCategories } from "../../../api/categoryApi";
-import ProductFilters from "../../../components/ProductFilters";
 import { SearchContext } from "../../../context/SearchContext";
-
-const formatPrice = (value) => `Rs. ${Number(value || 0).toLocaleString("en-IN")}`;
+import { ToastContext } from "../../../context/ToastContext";
+import Breadcrumbs from "../../../components/Breadcrumbs";
+import FilterBar from "../../../components/customer/FilterBar";
+import ProductGrid from "../../../components/customer/ProductGrid";
+import ProductGridSkeleton from "../../../components/customer/ProductGridSkeleton";
+import EmptyState from "../../../components/customer/EmptyState";
+import ErrorState from "../../../components/customer/ErrorState";
 
 export default function CustomerHome() {
   const dispatch = useDispatch();
@@ -18,7 +21,10 @@ export default function CustomerHome() {
   const { products, loading, error } = useSelector((state) => state.product);
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
   const { query } = useContext(SearchContext);
+  const { showToast } = useContext(ToastContext);
+
   const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [filters, setFilters] = useState({
     search: "",
     category: "",
@@ -27,6 +33,8 @@ export default function CustomerHome() {
     minRating: "",
     sort: "",
   });
+  const [cartLoadingById, setCartLoadingById] = useState({});
+  const [wishlistLoadingById, setWishlistLoadingById] = useState({});
 
   useEffect(() => {
     dispatch(getAllProducts());
@@ -40,115 +48,154 @@ export default function CustomerHome() {
   }, [filters.search, dispatch]);
 
   useEffect(() => {
-    fetchCategories()
-      .then((data) => setCategories(Array.isArray(data) ? data : data?.data || []))
-      .catch(() => setCategories([]));
+    const loadCategories = async () => {
+      setCategoriesLoading(true);
+      try {
+        const data = await fetchCategories();
+        setCategories(Array.isArray(data) ? data : data?.data || []);
+      } catch {
+        setCategories([]);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    loadCategories();
   }, []);
 
   useEffect(() => {
     setFilters((prev) => ({ ...prev, search: query }));
   }, [query]);
 
-  const updateFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
-  const applyFilters = () => dispatch(getAllProducts({ ...filters }));
+  const wishlistSet = useMemo(
+    () => new Set((wishlistItems || []).map((i) => String(i.productId))),
+    [wishlistItems]
+  );
+
+  const updateFilter = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const applyFilters = () => {
+    dispatch(getAllProducts({ ...filters }));
+  };
+
   const resetFilters = () => {
-    const empty = { search: "", category: "", minPrice: "", maxPrice: "", minRating: "", sort: "" };
+    const empty = {
+      search: query || "",
+      category: "",
+      minPrice: "",
+      maxPrice: "",
+      minRating: "",
+      sort: "",
+    };
     setFilters(empty);
-    dispatch(getAllProducts());
+    dispatch(getAllProducts({ search: empty.search }));
+    showToast("Filters reset.", "info");
+  };
+
+  const handleToggleWishlist = async (product) => {
+    const productId = String(product.id);
+    const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+    const userId = storedUser?.id;
+
+    if (!userId) {
+      showToast("Please login first.", "info");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      setWishlistLoadingById((prev) => ({ ...prev, [productId]: true }));
+      await dispatch(addWishlistItem({ userId, productId }));
+      await dispatch(fetchWishlist(userId));
+      showToast("Wishlist updated.", "success");
+    } catch {
+      showToast("Failed to update wishlist.", "error");
+    } finally {
+      setWishlistLoadingById((prev) => ({ ...prev, [productId]: false }));
+    }
+  };
+
+  const handleAddToCart = async (product) => {
+    const productId = String(product.id);
+    const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+    const userId = storedUser?.id;
+
+    if (!userId) {
+      showToast("Please login first.", "info");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      setCartLoadingById((prev) => ({ ...prev, [productId]: true }));
+      await dispatch(addItem({ userId, productId, quantity: 1 }));
+      await dispatch(fetchCart({ userId }));
+      showToast("Added to cart.", "success");
+    } catch {
+      showToast("Failed to add item.", "error");
+    } finally {
+      setCartLoadingById((prev) => ({ ...prev, [productId]: false }));
+    }
+  };
+
+  const handleBuyNow = (product) => {
+    showToast("Proceeding to checkout.", "info");
+    navigate(`/checkout?buyNow=1&productId=${product.id}&quantity=1`);
+  };
+
+  const handleRetry = () => {
+    dispatch(getAllProducts({ ...filters }));
   };
 
   return (
-    <div className="space-y-6">
-      <div className="marketplace-panel flex items-center justify-between p-5">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Customer Zone</p>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">
-            Welcome back{user?.name ? `, ${user.name}` : ""}.
-          </h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Your feed is tuned for quick reorders and new arrivals.</p>
-        </div>
-        <Link to="/orders" className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-600">
-          View Orders
-        </Link>
-      </div>
+    <div className="space-y-4">
+      <Breadcrumbs items={[{ label: "Home", to: "/" }, { label: "Customer" }]} />
 
-      <ProductFilters
+      <section className="rounded-card border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">Customer Zone</p>
+            <h1 className="mt-1 text-2xl font-extrabold text-slate-900 dark:text-slate-100">Shop curated picks</h1>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Welcome back{user?.name ? `, ${user.name}` : ""}. Fast delivery and better prices.
+            </p>
+          </div>
+          <Link
+            to="/orders"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            View Orders
+          </Link>
+        </div>
+      </section>
+
+      <FilterBar
         filters={filters}
         categories={categories}
+        categoriesLoading={categoriesLoading}
         onChange={updateFilter}
         onApply={applyFilters}
         onReset={resetFilters}
       />
 
       {loading ? (
-        <p className="py-12 text-center text-lg font-semibold text-slate-600 dark:text-slate-300">Loading products...</p>
+        <ProductGridSkeleton count={10} />
       ) : error ? (
-        <p className="py-12 text-center text-lg font-semibold text-red-600">{error}</p>
+        <ErrorState message={error} onRetry={handleRetry} />
+      ) : Array.isArray(products) && products.length > 0 ? (
+        <ProductGrid
+          products={products}
+          wishlistSet={wishlistSet}
+          cartLoadingById={cartLoadingById}
+          wishlistLoadingById={wishlistLoadingById}
+          onToggleWishlist={handleToggleWishlist}
+          onAddToCart={handleAddToCart}
+          onBuyNow={handleBuyNow}
+        />
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
-          {Array.isArray(products) && products.length > 0 ? (
-            products.map((product) => (
-              <div key={product.id} className="marketplace-panel p-4 transition hover:-translate-y-1 hover:shadow-xl">
-                <div className="relative">
-                  <Link to={`/product/${product.id}`}>
-                    <img
-                      src={product.imageUrl || "/placeholder.jpg"}
-                      alt={product.name || "Product"}
-                      className="h-44 w-full rounded-xl bg-slate-50 object-cover dark:bg-slate-950"
-                    />
-                  </Link>
-                  <button
-                    onClick={() => {
-                      const storedUser = JSON.parse(localStorage.getItem("user"));
-                      const userId = storedUser?.id;
-                      if (!userId) return navigate("/login");
-                      dispatch(addWishlistItem({ userId, productId: product.id }));
-                    }}
-                    className={`absolute right-2 top-2 rounded-full p-2 shadow ${
-                      wishlistItems?.some((i) => String(i.productId) === String(product.id))
-                        ? "bg-rose-500 text-white"
-                        : "bg-white text-rose-500 dark:bg-slate-900 dark:text-rose-300"
-                    }`}
-                  >
-                    <Heart
-                      className={`h-4 w-4 ${
-                        wishlistItems?.some((i) => String(i.productId) === String(product.id))
-                          ? "fill-white text-white"
-                          : "text-rose-500"
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                <Link to={`/product/${product.id}`}>
-                  <h3 className="mt-3 line-clamp-1 text-lg font-bold text-slate-900 dark:text-slate-100">{product.name || "Unnamed Product"}</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{product.categoryName || "Uncategorized"}</p>
-                  <p className="mt-2 text-lg font-extrabold text-emerald-600">{formatPrice(product.price)}</p>
-                </Link>
-
-                <button
-                  onClick={() => {
-                    const storedUser = JSON.parse(localStorage.getItem("user"));
-                    const userId = storedUser?.id;
-                    if (!userId) return navigate("/login");
-                    dispatch(addItem({ userId, productId: product.id, quantity: 1 }));
-                  }}
-                  className="mt-3 w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                >
-                  Add to Cart
-                </button>
-                <button
-                  onClick={() => navigate(`/checkout?buyNow=1&productId=${product.id}&quantity=1`)}
-                  className="mt-2 w-full rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600"
-                >
-                  Buy Now
-                </button>
-              </div>
-            ))
-          ) : (
-            <p className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400">No products found.</p>
-          )}
-        </div>
+        <EmptyState onReset={resetFilters} />
       )}
     </div>
   );

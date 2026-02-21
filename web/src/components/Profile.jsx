@@ -1,12 +1,14 @@
-﻿import { useContext, useState } from "react";
+import { useContext, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { updateUsername, updatePassword } from "../api/userApi";
 import { updateName, logout } from "../redux/userSlice";
 import { ThemeContext } from "../context/ThemeContext";
+import { ToastContext } from "../context/ToastContext";
+import { LogOut, UserCircle2, ShieldCheck } from "lucide-react";
 
 export default function Profile({ onClose }) {
-  const { user, token } = useSelector(state => state.user);
+  const { user, token } = useSelector((state) => state.user);
   const [name, setName] = useState(user?.name || "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -15,6 +17,7 @@ export default function Profile({ onClose }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { theme, toggleTheme } = useContext(ThemeContext);
+  const { showToast } = useContext(ToastContext);
 
   const handleChangeName = async () => {
     if (!name || name === user?.name) return;
@@ -22,22 +25,23 @@ export default function Profile({ onClose }) {
     try {
       await updateUsername(user.id, name, token);
       dispatch(updateName(name));
-      alert("Name updated successfully!");
-    } catch (err) {
-      alert("Failed to update name");
+      showToast("Name updated.", "success");
+    } catch {
+      showToast("Failed to update name.", "error");
     } finally {
       setLoadingName(false);
     }
   };
+
   const handleChangePassword = async () => {
     if (!password) return;
     setLoadingPassword(true);
     try {
       await updatePassword(user.id, password, token);
-      alert("Password updated successfully!");
+      showToast("Password updated.", "success");
       setPassword("");
-    } catch (err) {
-      alert("Failed to update password");
+    } catch {
+      showToast("Failed to update password.", "error");
     } finally {
       setLoadingPassword(false);
     }
@@ -45,81 +49,99 @@ export default function Profile({ onClose }) {
 
   const handleLogout = () => {
     dispatch(logout());
+    showToast("Logged out successfully.", "info");
     navigate("/");
     onClose();
   };
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-end bg-black bg-opacity-30 dark:bg-opacity-50"
+      className="fixed inset-0 z-50 flex items-start justify-end bg-black/35 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="mt-4 mr-4 bg-white dark:bg-slate-900 border dark:border-slate-700 rounded shadow-lg p-6 min-w-[300px]"
-        onClick={e => e.stopPropagation()}
+        className="mt-4 mr-4 w-[min(92vw,380px)] rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Profile</h2>
-          <button onClick={onClose} className="text-gray-500 dark:text-slate-300 hover:text-red-600 text-2xl">x</button>
-        </div>
         <div className="mb-4 flex items-center justify-between">
-          <span className="font-semibold">Theme</span>
-          <button
-            onClick={toggleTheme}
-            className="bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 px-3 py-1 rounded hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700"
-          >
-            {theme === "dark" ? "Light" : "Dark"}
+          <h2 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">Profile</h2>
+          <button onClick={onClose} className="text-2xl text-gray-500 hover:text-red-600 dark:text-slate-300">
+            x
           </button>
         </div>
-        <div className="mb-4">
-          <label className="block font-semibold mb-1">Name</label>
-          <input
-            type="text"
-            className="w-full border dark:border-slate-700 px-3 py-2 rounded bg-white dark:bg-slate-900 dark:text-slate-100"
-            value={name}
-            onChange={e => setName(e.target.value)}
-          />
+
+        <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950">
+          <div className="flex items-center gap-3">
+            <UserCircle2 className="h-8 w-8 text-blue-600 dark:text-blue-300" />
+            <div>
+              <p className="font-bold text-slate-900 dark:text-slate-100">{user?.name || "User"}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{user?.email || "No email"}</p>
+            </div>
+          </div>
+          <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-semibold uppercase text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            {user?.role || "User"}
+          </div>
+        </div>
+
+        <div className="mb-4 flex items-center justify-between">
+          <span className="font-semibold text-slate-800 dark:text-slate-200">Theme</span>
           <button
-            onClick={handleChangeName}
-            className="mt-2 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+            onClick={toggleTheme}
+            className="rounded-lg bg-gray-100 px-3 py-1 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
           >
-            Change Name
+            Switch to {theme === "dark" ? "Light" : "Dark"}
           </button>
         </div>
 
         <div className="mb-4">
-          <label className="block font-semibold mb-1">Password</label>
+          <label className="mb-1 block font-semibold text-slate-700 dark:text-slate-200">Name</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              className="w-full rounded-lg border px-3 py-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <button onClick={handleChangeName} disabled={loadingName} className="primary-cta">
+              {loadingName ? "Saving" : "Save"}
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <label className="mb-1 block font-semibold text-slate-700 dark:text-slate-200">Password</label>
           <input
             type={showPassword ? "text" : "password"}
-            className="w-full border dark:border-slate-700 px-3 py-2 rounded bg-white dark:bg-slate-900 dark:text-slate-100"
+            className="w-full rounded-lg border px-3 py-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
           />
-          <button
-            onClick={() => setShowPassword(v => !v)}
-            className="ml-2 text-sm text-blue-600 dark:text-blue-400"
-          >
-            {showPassword ? "Hide" : "Show"}
+          <button onClick={() => setShowPassword((v) => !v)} className="mt-1 text-sm text-blue-600 dark:text-blue-400">
+            {showPassword ? "Hide" : "Show"} password
           </button>
-          <button
-            onClick={handleChangePassword}
-            className="mt-2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 block"
-          >
-            Change Password
+          <button onClick={handleChangePassword} disabled={loadingPassword} className="primary-cta mt-2 w-full">
+            {loadingPassword ? "Updating" : "Change Password"}
           </button>
         </div>
+
         {user?.role?.toLowerCase() === "customer" && (
           <button
-            onClick={() => { navigate("/orders"); onClose(); }}
-            className="w-full bg-purple-600 text-white px-3 py-2 rounded hover:bg-purple-700 mt-2"
+            onClick={() => {
+              navigate("/orders");
+              onClose();
+            }}
+            className="accent-cta mt-2 w-full"
           >
             View Order History
           </button>
         )}
+
         <button
           onClick={handleLogout}
-          className="w-full bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 mt-3"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-3 py-2 font-semibold text-white transition hover:bg-red-600"
         >
+          <LogOut className="h-4 w-4" />
           Logout
         </button>
       </div>

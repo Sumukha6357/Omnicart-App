@@ -6,6 +6,7 @@ import App from "./App"
 import store from "./redux/store"
 import { ThemeProvider } from "./context/ThemeContext"
 import { SearchContext } from "./context/SearchContext"
+import { ToastProvider } from "./context/ToastContext"
 import "./index.css"
 
 const Root = () => {
@@ -14,11 +15,13 @@ const Root = () => {
     <React.StrictMode>
       <Provider store={store}>
         <ThemeProvider>
-          <SearchContext.Provider value={{ query, setQuery }}>
-            <BrowserRouter>
-              <App />
-            </BrowserRouter>
-          </SearchContext.Provider>
+          <ToastProvider>
+            <SearchContext.Provider value={{ query, setQuery }}>
+              <BrowserRouter>
+                <App />
+              </BrowserRouter>
+            </SearchContext.Provider>
+          </ToastProvider>
         </ThemeProvider>
       </Provider>
     </React.StrictMode>

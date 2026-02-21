@@ -1,16 +1,19 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import { subscribeNewsletter } from "../api/subscriptionApi";
+import { ToastContext } from "../context/ToastContext";
 
 const Footer = () => {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState({ type: "", message: "" });
   const [loading, setLoading] = useState(false);
+  const { showToast } = useContext(ToastContext);
 
   const handleSubscribe = async (e) => {
     e.preventDefault();
     if (!email.trim()) {
       setStatus({ type: "error", message: "Enter an email address." });
+      showToast("Enter an email address.", "error");
       return;
     }
 
@@ -18,11 +21,13 @@ const Footer = () => {
       setLoading(true);
       await subscribeNewsletter({ email, source: "footer" });
       setStatus({ type: "success", message: "Subscribed. Weekly deals are on the way." });
+      showToast("Subscribed successfully. Weekly drops enabled.", "success");
       setEmail("");
     } catch (err) {
       const message =
         err?.response?.data?.message || "Could not subscribe right now. Try again.";
       setStatus({ type: "error", message });
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }

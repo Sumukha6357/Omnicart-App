@@ -1,10 +1,12 @@
-﻿import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { addWishlistItem } from "../../../redux/wishlistSlice";
 import { getAllProducts, getProductById } from "../../../redux/productSlice";
 import { addItem, fetchCart } from "../../../redux/cartSlice";
 import { Heart } from "lucide-react";
+import Breadcrumbs from "../../../components/Breadcrumbs";
+import { ToastContext } from "../../../context/ToastContext";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -13,6 +15,7 @@ export default function ProductDetail() {
   const { product, products, loading } = useSelector((state) => state.product);
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
   const [quantity, setQuantity] = useState(1);
+  const { showToast } = useContext(ToastContext);
 
   useEffect(() => {
     if (!id) return;
@@ -29,37 +32,41 @@ export default function ProductDetail() {
   }, [id, productToShow?.categoryName, products, dispatch]);
 
   if (loading || !productToShow) {
-    return <p className="text-center mt-10">Loading product...</p>;
+    return <p className="mt-10 text-center text-slate-600 dark:text-slate-300">Loading product...</p>;
   }
 
   const handleAddToWishlist = () => {
     const user = JSON.parse(localStorage.getItem("user"));
     const userId = user?.id;
     if (!userId) {
-      alert("You must be logged in to add to wishlist.");
+      showToast("Please login to add wishlist items.", "info");
       return;
     }
     dispatch(addWishlistItem({ userId, productId: productToShow.id }));
+    showToast("Wishlist updated.", "success");
   };
 
   const handleAddToCart = () => {
     const user = JSON.parse(localStorage.getItem("user"));
     const userId = user?.id;
     if (!userId) {
-      alert("You must be logged in to add to cart.");
+      showToast("Please login to add cart items.", "info");
       return;
     }
-    dispatch(addItem({ userId, productId: productToShow.id, quantity }))
-      .then(() => dispatch(fetchCart({ userId })));
+    dispatch(addItem({ userId, productId: productToShow.id, quantity })).then(() =>
+      dispatch(fetchCart({ userId }))
+    );
+    showToast("Added to cart.", "success");
   };
 
   const handleBuyNow = () => {
     const user = JSON.parse(localStorage.getItem("user"));
     const userId = user?.id;
     if (!userId) {
-      alert("You must be logged in to buy.");
+      showToast("Please login to continue checkout.", "info");
       return;
     }
+    showToast("Proceeding to checkout.", "info");
     navigate(`/checkout?buyNow=1&productId=${productToShow.id}&quantity=${quantity}`);
   };
 
@@ -84,36 +91,44 @@ export default function ProductDetail() {
   const reviewsToShow = Array.isArray(productToShow?.reviews) ? productToShow.reviews : [];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 px-4 sm:px-6 lg:px-8 py-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-50 px-4 py-8 dark:bg-slate-950 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl">
+        <Breadcrumbs
+          items={[
+            { label: "Home", to: "/" },
+            { label: productToShow?.categoryName || "Products", to: "/" },
+            { label: productToShow?.name || "Detail" },
+          ]}
+        />
+
         <button
           onClick={handleBackHome}
-          className="mb-4 flex items-center text-blue-600 hover:text-blue-800 font-bold"
+          className="mb-4 flex items-center font-bold text-blue-600 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200"
         >
-          <span className="text-2xl mr-1">&#60;</span> Home
+          <span className="mr-1 text-2xl">&#60;</span> Home
         </button>
 
-        <div className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-2xl shadow-sm p-6 md:p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="marketplace-panel p-6 md:p-8">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             <div className="relative">
               <img
                 src={productToShow.imageUrl || "/placeholder.jpg"}
                 alt={productToShow.name}
-                className="w-full h-80 object-contain bg-gray-50 dark:bg-slate-950 rounded-xl"
+                className="h-80 w-full rounded-xl bg-gray-50 object-contain dark:bg-slate-950"
               />
               <button
                 onClick={handleAddToWishlist}
-                className={`absolute top-3 right-3 p-2 rounded-full shadow transition ${
+                className={`absolute right-3 top-3 rounded-full p-2 shadow transition ${
                   wishlistItems?.some((i) => String(i.productId) === String(productToShow.id))
-                    ? "bg-red-600 text-white ring-2 ring-red-200 scale-105"
-                    : "bg-white dark:bg-slate-900 border dark:border-slate-700 text-red-500 hover:bg-red-50"
+                    ? "scale-105 bg-red-600 text-white ring-2 ring-red-200"
+                    : "border bg-white text-red-500 hover:bg-red-50 dark:border-slate-700 dark:bg-slate-900"
                 }`}
                 title="Add to Wishlist"
               >
                 <Heart
-                  className={`w-5 h-5 ${
+                  className={`h-5 w-5 ${
                     wishlistItems?.some((i) => String(i.productId) === String(productToShow.id))
-                      ? "text-white fill-white"
+                      ? "fill-white text-white"
                       : "text-red-500"
                   }`}
                 />
@@ -121,21 +136,19 @@ export default function ProductDetail() {
             </div>
 
             <div>
-              <h1 className="text-3xl font-bold mb-3">{productToShow.name}</h1>
-              <p className="text-gray-700 dark:text-slate-200 mb-4">
+              <h1 className="mb-3 text-3xl font-bold text-slate-900 dark:text-slate-100">{productToShow.name}</h1>
+              <p className="mb-4 text-gray-700 dark:text-slate-200">
                 {productToShow.description || "No description available."}
               </p>
 
-              <div className="text-2xl font-semibold text-green-600 mb-4">
-                Rs. {productToShow.price}
-              </div>
+              <div className="mb-4 text-2xl font-semibold text-green-600">Rs. {productToShow.price}</div>
 
-              <div className="flex items-center gap-3 mb-6">
+              <div className="mb-6 flex items-center gap-3">
                 <span className="font-semibold">Quantity</span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="px-3 py-1 bg-gray-200 dark:bg-slate-800 rounded"
+                    className="rounded bg-gray-200 px-3 py-1 transition hover:bg-gray-300 dark:bg-slate-800 dark:hover:bg-slate-700"
                   >
                     -
                   </button>
@@ -144,11 +157,11 @@ export default function ProductDetail() {
                     min={1}
                     value={quantity}
                     onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
-                    className="w-16 border dark:border-slate-700 rounded text-center bg-white dark:bg-slate-950"
+                    className="w-16 rounded border bg-white text-center dark:border-slate-700 dark:bg-slate-950"
                   />
                   <button
                     onClick={() => setQuantity((q) => q + 1)}
-                    className="px-3 py-1 bg-gray-200 dark:bg-slate-800 rounded"
+                    className="rounded bg-gray-200 px-3 py-1 transition hover:bg-gray-300 dark:bg-slate-800 dark:hover:bg-slate-700"
                   >
                     +
                   </button>
@@ -156,16 +169,10 @@ export default function ProductDetail() {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <button
-                  onClick={handleAddToCart}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                >
+                <button onClick={handleAddToCart} className="primary-cta">
                   Add to Cart
                 </button>
-                <button
-                  onClick={handleBuyNow}
-                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                >
+                <button onClick={handleBuyNow} className="accent-cta">
                   Buy Now
                 </button>
               </div>
@@ -173,9 +180,9 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-2xl shadow-sm p-6">
-            <h2 className="text-lg font-bold mb-4">Product Details</h2>
+        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="marketplace-panel p-6">
+            <h2 className="mb-4 text-lg font-bold">Product Details</h2>
             <div className="grid grid-cols-2 gap-4 text-sm text-gray-700 dark:text-slate-300">
               <div>
                 <div className="font-semibold">Category</div>
@@ -196,8 +203,8 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-2xl shadow-sm p-6">
-            <h2 className="text-lg font-bold mb-4">Specifications</h2>
+          <div className="marketplace-panel p-6">
+            <h2 className="mb-4 text-lg font-bold">Specifications</h2>
             <div className="grid grid-cols-2 gap-4 text-sm text-gray-700 dark:text-slate-300">
               <div>
                 <div className="font-semibold">Brand</div>
@@ -231,9 +238,9 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-2xl shadow-sm p-6">
-            <h2 className="text-lg font-bold mb-3">How it works</h2>
+        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="marketplace-panel p-6">
+            <h2 className="mb-3 text-lg font-bold">How it works</h2>
             {productToShow?.usageNotes || productToShow?.howItWorks ? (
               <p className="text-sm text-gray-700 dark:text-slate-300">
                 {productToShow.usageNotes || productToShow.howItWorks}
@@ -243,12 +250,10 @@ export default function ProductDetail() {
             )}
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-2xl shadow-sm p-6">
-            <h2 className="text-lg font-bold mb-3">Care & maintenance</h2>
+          <div className="marketplace-panel p-6">
+            <h2 className="mb-3 text-lg font-bold">Care & maintenance</h2>
             {productToShow?.careInstructions ? (
-              <p className="text-sm text-gray-700 dark:text-slate-300">
-                {productToShow.careInstructions}
-              </p>
+              <p className="text-sm text-gray-700 dark:text-slate-300">{productToShow.careInstructions}</p>
             ) : (
               <div className="text-sm text-gray-600 dark:text-slate-300">No care instructions available.</div>
             )}
@@ -257,25 +262,22 @@ export default function ProductDetail() {
 
         {recommendations.length > 0 && (
           <div className="mt-10">
-            <h2 className="text-xl font-bold mb-4">More like this</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <h2 className="mb-4 text-xl font-bold">More like this</h2>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {recommendations.map((rec) => (
-                <div
-                  key={rec.id}
-                  className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-xl shadow-sm p-4 flex flex-col"
-                >
+                <div key={rec.id} className="marketplace-panel lift-card flex flex-col p-4">
                   <Link to={`/product/${rec.id}`} className="block">
                     <img
                       src={rec.imageUrl || "/placeholder.jpg"}
                       alt={rec.name}
-                      className="w-full h-40 object-contain bg-gray-50 dark:bg-slate-950 rounded-lg mb-3"
+                      className="mb-3 h-40 w-full rounded-lg bg-gray-50 object-contain dark:bg-slate-950"
                     />
-                    <div className="font-semibold mb-1">{rec.name}</div>
+                    <div className="mb-1 font-semibold">{rec.name}</div>
                   </Link>
-                  <div className="text-green-600 font-bold mb-3">Rs. {rec.price}</div>
+                  <div className="mb-3 font-bold text-green-600">Rs. {rec.price}</div>
                   <Link
                     to={`/product/${rec.id}`}
-                    className="mt-auto inline-flex items-center justify-center rounded-md bg-blue-600 text-white px-3 py-2 text-sm hover:bg-blue-700"
+                    className="primary-cta mt-auto inline-flex items-center justify-center"
                   >
                     View Product
                   </Link>
@@ -285,19 +287,17 @@ export default function ProductDetail() {
           </div>
         )}
 
-        <div className="mt-10 bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-2xl shadow-sm p-6">
-          <h2 className="text-xl font-bold mb-4">Reviews</h2>
+        <div className="marketplace-panel mt-10 p-6">
+          <h2 className="mb-4 text-xl font-bold">Reviews</h2>
           {reviewsToShow.length === 0 ? (
-            <div className="text-sm text-gray-600 dark:text-slate-300">
-              No reviews yet.
-            </div>
+            <div className="text-sm text-gray-600 dark:text-slate-300">No reviews yet.</div>
           ) : (
             <div className="space-y-4">
               {reviewsToShow.map((review) => (
-                <div key={review.id} className="border dark:border-slate-800 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
+                <div key={review.id} className="rounded-lg border p-4 dark:border-slate-800">
+                  <div className="mb-2 flex items-center justify-between">
                     <div className="font-semibold">{review.name}</div>
-                    <div className="text-sm text-yellow-600">{"★".repeat(review.rating)}</div>
+                    <div className="text-sm text-yellow-600">{"?".repeat(review.rating)}</div>
                   </div>
                   <div className="text-sm text-gray-700 dark:text-slate-300">{review.text}</div>
                 </div>

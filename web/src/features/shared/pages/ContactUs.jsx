@@ -1,25 +1,31 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { subscribeNewsletter } from "../../../api/subscriptionApi";
+import Breadcrumbs from "../../../components/Breadcrumbs";
+import { ToastContext } from "../../../context/ToastContext";
 
 const ContactUs = () => {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState({ type: "", message: "" });
   const [loading, setLoading] = useState(false);
+  const { showToast } = useContext(ToastContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email.trim()) {
       setStatus({ type: "error", message: "Email is required." });
+      showToast("Email is required.", "error");
       return;
     }
     try {
       setLoading(true);
       await subscribeNewsletter({ email, source: "contact-page" });
       setStatus({ type: "success", message: "You are subscribed. Our team will also share updates there." });
+      showToast("Subscription completed.", "success");
       setEmail("");
     } catch (err) {
       const message = err?.response?.data?.message || "Failed to submit. Please try again.";
       setStatus({ type: "error", message });
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
@@ -27,6 +33,7 @@ const ContactUs = () => {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      <Breadcrumbs items={[{ label: "Home", to: "/" }, { label: "Contact" }]} />
       <section className="rounded-3xl border border-slate-200 bg-gradient-to-r from-blue-600 to-orange-500 px-6 py-10 text-white">
         <h1 className="text-3xl font-extrabold">Contact OmniCart</h1>
         <p className="mt-3 text-sm text-blue-50">

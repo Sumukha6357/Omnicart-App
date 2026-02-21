@@ -6,6 +6,8 @@ import { getAllProducts } from "../../../redux/productSlice";
 import { fetchCategories } from "../../../api/categoryApi";
 import ProductFilters from "../../../components/ProductFilters";
 import { SearchContext } from "../../../context/SearchContext";
+import Breadcrumbs from "../../../components/Breadcrumbs";
+import { ToastContext } from "../../../context/ToastContext";
 
 const formatPrice = (value) => `Rs. ${Number(value || 0).toLocaleString("en-IN")}`;
 
@@ -15,6 +17,7 @@ export default function Home() {
   const { products, loading, error } = useSelector((state) => state.product);
   const { user, token } = useSelector((state) => state.user);
   const { query } = useContext(SearchContext);
+  const { showToast } = useContext(ToastContext);
   const [categories, setCategories] = useState([]);
   const [filters, setFilters] = useState({
     search: "",
@@ -63,6 +66,7 @@ export default function Home() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs items={[{ label: "Home" }]} />
       <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-r from-blue-600 via-blue-500 to-orange-500 px-6 py-10 text-white">
         <p className="marketplace-chip mb-3 border-white/30 bg-white/15 text-white">Fresh arrivals</p>
         <h1 className="max-w-2xl text-3xl font-extrabold leading-tight sm:text-4xl">
@@ -76,7 +80,7 @@ export default function Home() {
       {topDeals.length > 0 && (
         <section className="grid gap-4 md:grid-cols-3">
           {topDeals.map((deal) => (
-            <Link key={deal.id} to={`/product/${deal.id}`} className="marketplace-panel p-4 transition hover:-translate-y-0.5 hover:shadow-lg">
+            <Link key={deal.id} to={`/product/${deal.id}`} className="marketplace-panel lift-card p-4">
               <p className="text-xs font-bold uppercase tracking-wide text-orange-600">Top Deal</p>
               <h3 className="mt-1 line-clamp-1 text-base font-bold text-slate-900 dark:text-slate-100">{deal.name}</h3>
               <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{deal.categoryName || "General"}</p>
@@ -99,7 +103,7 @@ export default function Home() {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
           {Array.isArray(products) && products.length > 0 ? (
             products.map((product) => (
-              <div key={product.id} className="group marketplace-panel p-4 transition hover:-translate-y-1 hover:shadow-xl">
+              <div key={product.id} className="group marketplace-panel lift-card p-4">
                 <img
                   src={product.imageUrl || "/placeholder.jpg"}
                   alt={product.name || "Product"}
@@ -111,7 +115,7 @@ export default function Home() {
                 <div className="mt-3 flex gap-2">
                   <Link
                     to={`/product/${product.id}`}
-                    className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                    className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                   >
                     View
                   </Link>
@@ -120,17 +124,24 @@ export default function Home() {
                       onClick={() => {
                         const storedUser = JSON.parse(localStorage.getItem("user"));
                         const userId = storedUser?.id;
-                        if (!userId) return navigate("/login");
+                        if (!userId) {
+                          showToast("Please login first.", "info");
+                          return navigate("/login");
+                        }
                         dispatch(addItem({ userId, productId: product.id, quantity: 1 }));
+                        showToast("Added to cart.", "success");
                       }}
-                      className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                      className="primary-cta"
                     >
                       Add to Cart
                     </button>
                   ) : (
                     <button
-                      onClick={() => navigate("/login")}
-                      className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600"
+                      onClick={() => {
+                        showToast("Login to continue.", "info");
+                        navigate("/login");
+                      }}
+                      className="accent-cta"
                     >
                       Login to Buy
                     </button>
