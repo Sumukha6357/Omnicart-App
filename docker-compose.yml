@@ -52,7 +52,7 @@ services:
       redis:
         condition: service_healthy
     ports:
-      - "5062:8080"
+      - "5060:8080"
 
   web:
     build:
@@ -65,7 +65,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "3000:80"
+      - "3060:80"
 
 volumes:
   pgdata_local:

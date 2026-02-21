@@ -43,7 +43,7 @@ docker compose -f docker-compose.prod.yml up --build -d
 
 ### Port mapping
 
-- Local: web `3000`, backend `5062`
+- Local/default (`docker compose up`): web `3060`, backend `5060`
 - Dev: web `3062`, backend `5062`
 - Prod: web `3061`, backend `5061`
 
