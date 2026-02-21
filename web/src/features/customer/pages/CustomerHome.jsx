@@ -27,7 +27,7 @@ export default function CustomerHome() {
   const { user } = useSelector((state) => state.user);
   const { products, loading, error } = useSelector((state) => state.product);
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
-  const { query } = useContext(SearchContext);
+  const { query, setQuery } = useContext(SearchContext);
   const { showToast } = useContext(ToastContext);
 
   const [categories, setCategories] = useState([]);
@@ -89,7 +89,10 @@ export default function CustomerHome() {
   }, []);
 
   useEffect(() => {
-    setFilters((prev) => ({ ...prev, search: query }));
+    setFilters((prev) => {
+      if (prev.search === query) return prev;
+      return { ...prev, search: query };
+    });
   }, [query]);
 
   useEffect(() => {
@@ -97,6 +100,7 @@ export default function CustomerHome() {
     const preferredSort = localStorage.getItem("omnicart_pref_sort");
     if (!preferredCategory && !preferredSort) return;
 
+    setQuery("");
     setFilters((prev) => {
       const nextFilters = {
         ...prev,
@@ -173,6 +177,7 @@ export default function CustomerHome() {
   };
 
   const handlePickCategory = (category) => {
+    setQuery("");
     const nextFilters = { ...filters, category, search: "" };
     setFilters(nextFilters);
     dispatch(getAllProducts(nextFilters));
@@ -181,6 +186,7 @@ export default function CustomerHome() {
 
   const handleAdClick = (ad) => {
     if (ad?.category) {
+      setQuery("");
       const nextFilters = { ...filters, category: ad.category, search: "" };
       setFilters(nextFilters);
       dispatch(getAllProducts(nextFilters));
@@ -191,6 +197,14 @@ export default function CustomerHome() {
       navigate(ad.ctaLink);
     }
   };
+
+  const visibleAds = useMemo(() => {
+    if (!Array.isArray(ads) || ads.length === 0) return [];
+    if (!filters.category) return ads;
+    const category = String(filters.category).toLowerCase();
+    const matched = ads.filter((ad) => String(ad.category || "").toLowerCase().includes(category));
+    return matched.length > 0 ? matched : ads;
+  }, [ads, filters.category]);
 
   const deliveryLocation = localStorage.getItem("omnicart_location") || "Bengaluru 562130";
 
@@ -279,10 +293,10 @@ export default function CustomerHome() {
       )}
 
       {!isSearchMode && showTopSections && (
-        <HeroCarousel ads={ads} onSlideAction={handleAdClick} locationLabel={deliveryLocation} />
+        <HeroCarousel ads={visibleAds} onSlideAction={handleAdClick} locationLabel={deliveryLocation} />
       )}
       {!isSearchMode && showTopSections && <DealWidgets products={products} />}
-      {!isSearchMode && showTopSections && <PromoAdsStrip ads={ads} onAdClick={handleAdClick} />}
+      {!isSearchMode && showTopSections && <PromoAdsStrip ads={visibleAds} onAdClick={handleAdClick} />}
       {!isSearchMode && showTopSections && <CategoryBanners onPickCategory={handlePickCategory} />}
       {!isSearchMode && showTopSections && (
         <CategoryProductRows products={products} onCategoryPick={handlePickCategory} />

@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Heart, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatInr } from "../../utils/formatters";
@@ -20,8 +20,29 @@ const ProductCard = ({
 }) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [imgSrc, setImgSrc] = useState(product.imageUrl || IMAGE_FALLBACK);
+  const [wishlistedFx, setWishlistedFx] = useState(false);
   const ratingValue = Number(product?.rating || 0);
   const reviewCount = Array.isArray(product?.reviews) ? product.reviews.length : 0;
+
+  useEffect(() => {
+    setImgSrc(product.imageUrl || IMAGE_FALLBACK);
+    setIsImageLoaded(false);
+  }, [product.imageUrl, product.id]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setIsImageLoaded(true);
+      if (!imgSrc) setImgSrc(IMAGE_FALLBACK);
+    }, 2200);
+    return () => window.clearTimeout(timer);
+  }, [imgSrc]);
+
+  useEffect(() => {
+    if (!isWishlisted) return;
+    setWishlistedFx(true);
+    const timer = window.setTimeout(() => setWishlistedFx(false), 320);
+    return () => window.clearTimeout(timer);
+  }, [isWishlisted, product.id]);
 
   return (
     <article className="group marketplace-card h-full rounded-card border border-slate-200 bg-white p-3.5 shadow-card transition duration-200 hover:-translate-y-1 hover:shadow-card-hover dark:border-slate-800 dark:bg-slate-900">
@@ -52,10 +73,16 @@ const ProductCard = ({
           onClick={() => onToggleWishlist(product)}
           disabled={isTogglingWishlist}
           className={`absolute right-2 top-2 rounded-pill border border-slate-200 bg-white p-2 shadow-sm transition hover:scale-105 dark:border-slate-700 dark:bg-slate-900 ${
-            isWishlisted ? "text-rose-500" : "text-slate-500 dark:text-slate-300"
+            isWishlisted
+              ? "text-rose-500 ring-2 ring-rose-200 dark:ring-rose-900/60"
+              : "text-slate-500 dark:text-slate-300"
           }`}
         >
-          <Heart className={`h-4 w-4 ${isWishlisted ? "fill-rose-500 text-rose-500" : ""}`} />
+          <Heart
+            className={`h-4 w-4 transition ${
+              isWishlisted ? "fill-rose-500 text-rose-500 heart-pop" : ""
+            } ${wishlistedFx ? "heart-pop" : ""}`}
+          />
         </button>
       </div>
 

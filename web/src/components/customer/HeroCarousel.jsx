@@ -28,9 +28,24 @@ const fallbackSlides = [
   },
 ];
 
+const HERO_IMAGE_FALLBACK =
+  "https://images.unsplash.com/photo-1557821552-17105176677c?auto=format&fit=crop&w=1600&q=80";
+
 export default function HeroCarousel({ ads = [], onSlideAction, locationLabel }) {
-  const slides = useMemo(() => (Array.isArray(ads) && ads.length > 0 ? ads : fallbackSlides), [ads]);
+  const slides = useMemo(() => {
+    const base = Array.isArray(ads) && ads.length > 0 ? ads : fallbackSlides;
+    return base.map((slide, index) => ({
+      id: slide.id || `slide-${index}`,
+      title: slide.title || "Featured Deals",
+      subtitle: slide.subtitle || "Discover fresh picks across categories.",
+      imageUrl: slide.imageUrl || HERO_IMAGE_FALLBACK,
+      ctaText: slide.ctaText || "Shop now",
+      category: slide.category || "",
+      ctaLink: slide.ctaLink || "/customer/home",
+    }));
+  }, [ads]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [heroSrc, setHeroSrc] = useState("");
 
   useEffect(() => {
     if (!slides.length) return;
@@ -43,6 +58,10 @@ export default function HeroCarousel({ ads = [], onSlideAction, locationLabel })
   useEffect(() => {
     if (activeIndex > slides.length - 1) setActiveIndex(0);
   }, [activeIndex, slides.length]);
+
+  useEffect(() => {
+    setHeroSrc(slides[activeIndex]?.imageUrl || HERO_IMAGE_FALLBACK);
+  }, [activeIndex, slides]);
 
   const goPrev = () => {
     setActiveIndex((prev) => (prev - 1 + slides.length) % slides.length);
@@ -57,8 +76,9 @@ export default function HeroCarousel({ ads = [], onSlideAction, locationLabel })
   return (
     <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-sm dark:border-slate-800" aria-label="Hero promotions">
       <img
-        src={activeSlide?.imageUrl}
+        src={heroSrc}
         alt={activeSlide?.title || "Offer banner"}
+        onError={() => setHeroSrc(HERO_IMAGE_FALLBACK)}
         className="h-64 w-full object-cover md:h-80"
       />
       <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/35 to-black/20" />

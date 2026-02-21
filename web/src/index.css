@@ -74,6 +74,25 @@
   animation: toast-in 220ms ease-out;
 }
 
+.heart-pop {
+  animation: heart-pop 260ms ease-out;
+}
+
+@keyframes heart-pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
+  55% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 @keyframes toast-in {
   from {
     opacity: 0;
