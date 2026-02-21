@@ -1,62 +1,77 @@
-// src/api/shipmentApi.js
-import api from './axios';
+const SHIPMENTS_KEY = 'omnicart_shipments'
 
-// 🔐 Auth headers helper
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
-  return {
-    Authorization: `Bearer ${token}`,
-    "X-User-Role": role,
-    "Content-Type": "application/json",
-  };
-};
+const readShipments = () => {
+  try {
+    const raw = localStorage.getItem(SHIPMENTS_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
 
-// 📦 Get shipment by order ID
+const writeShipments = (shipments) => {
+  localStorage.setItem(SHIPMENTS_KEY, JSON.stringify(shipments))
+}
+
+const newId = () => `SHP-${Date.now()}-${Math.floor(Math.random() * 100000)}`
+
 export const getShipmentByOrderId = async (orderId) => {
-  const response = await api.get(`/api/shipments/order/${orderId}`, {
-    headers: getAuthHeaders(),
-  });
-  return response.data;
-};
+  const shipments = readShipments()
+  const shipment = shipments.find((s) => String(s.orderId) === String(orderId))
+  if (!shipment) {
+    throw new Error('Shipment not found')
+  }
+  return shipment
+}
 
-// 🚚 Create a new shipment
 export const createShipment = async (orderId, logisticsPartner, trackingNumber) => {
-  const trackingParam = trackingNumber ? `&trackingNumber=${encodeURIComponent(trackingNumber)}` : "";
-  const response = await api.post(
-    `/api/shipments/${orderId}?logisticsPartner=${encodeURIComponent(logisticsPartner)}${trackingParam}`,
-    null, // no body needed
-    {
-      headers: getAuthHeaders(),
-    }
-  );
-  return response.data;
-};
+  const shipments = readShipments()
+  const existing = shipments.find((s) => String(s.orderId) === String(orderId))
 
-// 🔄 Update shipment status
+  if (existing) {
+    existing.logisticsPartner = logisticsPartner || existing.logisticsPartner
+    existing.trackingNumber = trackingNumber || existing.trackingNumber
+    existing.status = existing.status || 'Pending'
+    existing.shippedAt = existing.shippedAt || new Date().toISOString()
+    writeShipments(shipments)
+    return existing
+  }
+
+  const shipment = {
+    shipmentId: newId(),
+    orderId: String(orderId),
+    logisticsPartner: logisticsPartner || null,
+    trackingNumber: trackingNumber || null,
+    status: 'Pending',
+    shippedAt: new Date().toISOString(),
+    estimatedDelivery: null,
+  }
+
+  shipments.unshift(shipment)
+  writeShipments(shipments)
+  return shipment
+}
+
 export const updateShipmentStatus = async (shipmentId, status) => {
-  const response = await api.put(
-    `/api/shipments/${shipmentId}?status=${status}`,
-    null, // no body needed
-    {
-      headers: getAuthHeaders(),
-    }
-  );
-  return response.data;
-};
+  const shipments = readShipments()
+  const shipment = shipments.find((s) => String(s.shipmentId) === String(shipmentId))
+  if (!shipment) {
+    throw new Error('Shipment not found')
+  }
+  shipment.status = status
+  if (!shipment.shippedAt) {
+    shipment.shippedAt = new Date().toISOString()
+  }
+  writeShipments(shipments)
+  return shipment
+}
 
-// 📋 Get all shipments (admin)
 export const getAllShipments = async () => {
-  const response = await api.get(`/api/shipments`, {
-    headers: getAuthHeaders(),
-  });
-  return response.data;
-};
+  return readShipments()
+}
 
-// 📦 Get seller shipments
 export const getSellerShipments = async (sellerId) => {
-  const response = await api.get(`/api/shipments/seller/${sellerId}`, {
-    headers: getAuthHeaders(),
-  });
-  return response.data;
-};
+  const shipments = readShipments()
+  const filtered = shipments.filter((s) => String(s.sellerId) === String(sellerId))
+  return filtered.length > 0 ? filtered : shipments
+}

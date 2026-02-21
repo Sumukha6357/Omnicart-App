@@ -49,6 +49,7 @@ export default function Payment() {
       const placed = await dispatch(placeOrderThunk({ userId, orderRequest })).unwrap();
       if (!orderDetails.buyNow) {
         dispatch(clearCart());
+        localStorage.removeItem(`omnicart_cart_${String(userId)}`);
       }
       if (placed?.orderId) {
         localStorage.setItem("lastOrderId", placed.orderId);

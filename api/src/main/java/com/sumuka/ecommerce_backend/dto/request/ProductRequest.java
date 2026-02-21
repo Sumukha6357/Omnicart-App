@@ -1,6 +1,5 @@
 package com.sumuka.ecommerce_backend.dto.request;
 
-
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -16,7 +15,7 @@ public class ProductRequest {
     private String description;
     private BigDecimal price;
     private Integer quantity;
-    private String imageUrl;        // 🔗 S3 pre-signed URL
-    private UUID sellerId;          // 👈 Just pass ID
-    private UUID categoryId;        // 👈 Just pass ID
+    private String imageUrl;        // Public image URL
+    private UUID sellerId;          // Seller ID
+    private UUID categoryId;        // Category ID
 }

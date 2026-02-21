@@ -1,36 +1,51 @@
-// src/api/wishlistApi.js
-import api from './axios';
+import { fetchProductById } from './productApi'
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
-  return {
-    Authorization: `Bearer ${token}`,
-  };
-};
+const keyForUser = (userId) => `omnicart_wishlist_${String(userId || 'guest')}`
 
-// ➕ Add to wishlist
+const readWishlist = (userId) => {
+  try {
+    const raw = localStorage.getItem(keyForUser(userId))
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+const writeWishlist = (userId, items) => {
+  localStorage.setItem(keyForUser(userId), JSON.stringify(items))
+}
+
 export const addToWishlist = async (userId, productId) => {
-  const response = await api.post(
-    `/api/wishlist/${userId}`,
-    { productId },
-    { headers: getAuthHeaders() }
-  );
-  return response.data;
-};
+  const id = String(productId)
+  const items = readWishlist(userId)
+  if (items.some((i) => String(i.productId) === id)) {
+    return { success: true, items }
+  }
 
-// ➖ Remove from wishlist
+  let product = null
+  try {
+    product = await fetchProductById(id)
+  } catch {
+    product = null
+  }
+
+  items.push({
+    productId: id,
+    name: product?.name || 'Product',
+    price: Number(product?.price || 0),
+    imageUrl: product?.imageUrl || '',
+  })
+
+  writeWishlist(userId, items)
+  return { success: true, items }
+}
+
 export const removeFromWishlist = async (userId, productId) => {
-  const response = await api.delete(
-    `/api/wishlist/${userId}/${productId}`,
-    { headers: getAuthHeaders() }
-  );
-  return response.data;
-};
+  const items = readWishlist(userId).filter((i) => String(i.productId) !== String(productId))
+  writeWishlist(userId, items)
+  return { success: true, items }
+}
 
-// 📜 Get user's wishlist
 export const getWishlist = async (userId) => {
-  const response = await api.get(`/api/wishlist/${userId}`, {
-    headers: getAuthHeaders(),
-  });
-  return response.data;
-};
+  return readWishlist(userId)
+}

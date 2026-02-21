@@ -1,5 +1,6 @@
 // src/api/sellerApi.js
 import api from "./axios";
+import { fetchProductsBySeller } from "./productApi";
 
 // 🔧 Auth headers helper
 const getAuthHeaders = () => {
@@ -16,10 +17,7 @@ const BASE_URL = "/api";
 
 // 📦 Fetch all products for a seller
 export const fetchSellerProducts = async (sellerId) => {
-  const response = await api.get(`${BASE_URL}/products/seller/${sellerId}`, {
-    headers: getAuthHeaders(),
-  });
-  return response.data;
+  return fetchProductsBySeller(sellerId);
 };
 
 // 👥 Fetch all buyers for a seller

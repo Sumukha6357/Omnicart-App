@@ -160,7 +160,7 @@ export default function AddProduct({ embedded = false }) {
             <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">
               <div className="font-semibold text-slate-800 dark:text-slate-200">Product image URL</div>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
-                Paste a public image link (optional). You can add S3 uploads later.
+                Paste a public image link (optional).
               </p>
               <input
                 name="imageUrl"
