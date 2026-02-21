@@ -41,6 +41,12 @@ docker compose -f docker-compose.dev.yml up --build
 docker compose -f docker-compose.prod.yml up --build -d
 ```
 
+### Port mapping
+
+- Local: web `3000`, backend `8080`
+- Dev: web `3062`, backend `5062`
+- Prod: web `3061`, backend `5061`
+
 ### Local development
 
 Copy `.env.local` to `.env` (or load it in your shell) before running the backend or frontend locally:

@@ -44,7 +44,7 @@ services:
       redis:
         condition: service_started
     ports:
-      - "8080:8080"
+      - "5061:8080"
 
   web:
     image: ${DOCKERHUB_USERNAME:-sumukha6357}/omnicart-web:${IMAGE_TAG:-latest}
@@ -58,7 +58,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "3000:80"
+      - "3061:80"
 
 volumes:
   pgdata_prod:
