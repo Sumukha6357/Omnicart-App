@@ -1,9 +1,8 @@
-// src/components/Navbar.jsx
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useContext, useState, useEffect } from "react";
+import { HeartIcon, ShoppingCart, Search } from "lucide-react";
 import Profile from "./Profile";
-import { HeartIcon } from "lucide-react"; // Make sure lucide-react is installed
 import { SearchContext } from "../context/SearchContext";
 import { fetchWishlist } from "../redux/wishlistSlice";
 import { fetchCart } from "../redux/cartSlice";
@@ -11,14 +10,12 @@ import { fetchCart } from "../redux/cartSlice";
 const Navbar = () => {
   const location = useLocation();
   const isAuthPage = ["/login", "/signup"].includes(location.pathname);
-
   const { user, token } = useSelector((state) => state.user);
   const { cartItems } = useSelector((state) => state.cart);
   const { items: wishlistItems } = useSelector((state) => state.wishlist);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { query, setQuery } = useContext(SearchContext);
-
   const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
@@ -36,149 +33,100 @@ const Navbar = () => {
     }
   }, [dispatch, user?.id]);
 
+  const goRoleHome = () => {
+    const role = (user?.role || (() => {
+      try {
+        return JSON.parse(localStorage.getItem("user"))?.role;
+      } catch {
+        return null;
+      }
+    })() || "").toLowerCase();
+
+    if (role === "admin") return navigate("/admin/dashboard", { replace: true });
+    if (role === "seller") return navigate("/seller/dashboard", { replace: true });
+    if (role === "customer") return navigate("/customer/home", { replace: true });
+    return navigate("/", { replace: true });
+  };
+
   return (
-    <nav className="bg-white dark:bg-slate-900 shadow-md px-6 py-3 flex items-center justify-between">
-      <div className="flex items-center gap-4">
+    <nav className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur">
+      <div className="mx-auto flex w-full max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <button
-          className="text-2xl font-bold text-blue-600 dark:text-blue-400 focus:outline-none"
-          style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
-          onClick={() => {
-            // Prefer redux user; fall back to localStorage if needed.
-            let role = user?.role;
-            if (!role) {
-              try {
-                const userData = JSON.parse(localStorage.getItem("user"));
-                role = userData?.role;
-              } catch {}
-            }
-            if (role) {
-              const normalized = String(role).toLowerCase();
-              if (normalized === "admin") {
-                navigate("/admin/dashboard", { replace: true });
-                return;
-              }
-              if (normalized === "seller") {
-                navigate("/seller/dashboard", { replace: true });
-                return;
-              }
-              if (normalized === "customer") {
-                navigate("/customer/home", { replace: true });
-                return;
-              }
-            }
-            // Not logged in or unknown role
-            navigate("/", { replace: true });
-          }}
+          onClick={goRoleHome}
+          className="rounded-lg bg-gradient-to-r from-blue-600 to-orange-500 px-3 py-1.5 text-lg font-extrabold tracking-tight text-white"
         >
           OmniCart
         </button>
-      </div>
 
-      {!isAuthPage && (
-        <div className="flex-1 flex justify-center">
-          <div className="hidden md:flex items-center">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search products"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-80 lg:w-[28rem] rounded-full border dark:border-slate-700 bg-white dark:bg-slate-950 text-gray-800 dark:text-slate-100 px-4 py-2 pl-10 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                🔎
-              </span>
-            </div>
+        {!isAuthPage && (
+          <div className="relative hidden flex-1 md:block">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search products, categories and offers"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full rounded-full border border-slate-300 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+            />
           </div>
-        </div>
-      )}
+        )}
 
-      {!isAuthPage && (
-        <div className="space-x-4 flex items-center">
-          {/* <Link to="/">Home</Link> */}
+        {!isAuthPage && (
+          <div className="flex items-center gap-3">
+            {user && user.role?.toLowerCase() === "customer" && (
+              <Link to="/wishlist" title="Wishlist" className="relative rounded-full bg-rose-50 p-2 text-rose-600 hover:bg-rose-100">
+                <HeartIcon className="h-5 w-5" />
+                {wishlistItems?.length > 0 && (
+                  <span className="absolute -right-1 -top-1 rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">
+                    {wishlistItems.length}
+                  </span>
+                )}
+              </Link>
+            )}
 
-          {user && user.role === "admin" && (
-            <Link to="/admin/dashboard">Admin Dashboard</Link>
-          )}
-
-          {user && user.role === "seller" && (
-            <Link to="/seller/dashboard">Seller Dashboard</Link>
-          )}
-
-          {/* Wishlist Icon for Customers */}
-          {user && user.role?.toLowerCase() === "customer" && (
-            <Link to="/wishlist" title="Wishlist" className="relative">
-              <HeartIcon className="w-6 h-6 text-red-500 hover:text-red-600" />
-              {wishlistItems?.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full px-1.5">
-                  {wishlistItems.length}
-                </span>
-              )}
-            </Link>
-          )}
-
-          {/* Cart Button for Customers */}
-          {user && user.role?.toLowerCase() === "customer" && (
-            <button
-              onClick={() => navigate("/cart")}
-              className="relative bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 flex items-center"
-            >
-              Cart
-              {cartItems?.length > 0 && (
-                <span className="ml-1 bg-white dark:bg-slate-800 text-green-700 dark:text-green-300 font-bold rounded-full px-2">
-                  {cartItems.length}
-                </span>
-              )}
-            </button>
-          )}
-
-          {token ? (
-            <>
-              {/* Removed user name from navbar */}
+            {user && user.role?.toLowerCase() === "customer" && (
               <button
-                className="font-bold text-blue-600 dark:text-blue-400 text-lg bg-gray-100 dark:bg-slate-800 px-3 py-1 rounded hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700"
-                onClick={() => {
-                  setShowProfile(true);
-                }}
+                onClick={() => navigate("/cart")}
+                className="relative flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-2 text-sm font-bold text-white hover:bg-emerald-700"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                Cart
+                {cartItems?.length > 0 && (
+                  <span className="rounded-full bg-white px-1.5 text-[10px] font-bold text-emerald-700">
+                    {cartItems.length}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {token ? (
+              <button
+                className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1.5 text-sm font-bold text-slate-700 hover:bg-slate-200"
+                onClick={() => setShowProfile(true)}
                 title={user?.name || "Profile"}
               >
                 {user?.name
-                  ? (user.name.length <= 10
-                      ? user.name
-                      : user.name
-                          .split(/\s+/)
-                          .map((n) => n[0]?.toUpperCase())
-                          .join("")
-                    )
+                  ? user.name.length <= 10
+                    ? user.name
+                    : user.name.split(/\s+/).map((n) => n[0]?.toUpperCase()).join("")
                   : "P"}
               </button>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/login"
-                className="bg-blue-600 text-white px-3 py-1 rounded"
-              >
-                Login
-              </Link>
-              <Link
-                to="/signup"
-                className="bg-green-600 text-white px-3 py-1 rounded"
-              >
-                Sign Up
-              </Link>
-            </>
-          )}
-        </div>
-      )}
-
+            ) : (
+              <>
+                <Link to="/login" className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                  Login
+                </Link>
+                <Link to="/signup" className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600">
+                  Sign Up
+                </Link>
+              </>
+            )}
+          </div>
+        )}
+      </div>
       {showProfile && <Profile onClose={() => setShowProfile(false)} />}
     </nav>
   );
 };
 
 export default Navbar;
-
-
-
-
