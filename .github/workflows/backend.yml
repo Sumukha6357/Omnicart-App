@@ -18,7 +18,8 @@ jobs:
           cache: maven
 
       - name: Build with Maven
-        run: mvn -pl api clean verify
+        working-directory: api
+        run: mvn clean verify
 
   docker-build-push:
     needs: build-and-test
