@@ -1,0 +1,81 @@
+/* 
+  TITANIUM CORE (Omnicart 2025 Upgrade)
+  Standardized OKLCH tokens and Magic Tier utilities.
+*/
+
+@layer base {
+  :root {
+    /* 2025 OKLCH Color System */
+    --titanium-bg: oklch(0.12 0.01 250);
+    --titanium-surface-1: oklch(0.16 0.01 250);
+    --titanium-surface-2: oklch(0.2 0.01 250);
+    --titanium-surface-3: oklch(0.25 0.02 250);
+    
+    --titanium-primary: oklch(0.6 0.2 250); /* Royal Blue */
+    --titanium-accent: oklch(0.7 0.15 150);  /* Emerald Glow */
+    --titanium-warning: oklch(0.8 0.15 80);   /* Amber */
+    
+    --titanium-border: oklch(1 0 0 / 0.08);
+    --titanium-border-highlight: oklch(1 0 0 / 0.15);
+  }
+
+  .dark {
+    --titanium-bg: oklch(0.08 0.01 250);
+    --titanium-surface-1: oklch(0.12 0.01 250);
+    --titanium-surface-2: oklch(0.15 0.01 250);
+    --titanium-surface-3: oklch(0.18 0.01 250);
+  }
+}
+
+@layer utilities {
+  /* Magic Shimmer Effect */
+  .animate-titanium-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 25%,
+      oklch(1 0 0 / 0.08) 50%,
+      transparent 75%
+    );
+    background-size: 200% 100%;
+    animation: titanium-shimmer 3s infinite linear;
+  }
+  
+  @keyframes titanium-shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+
+  /* 3D Surface Shadow */
+  .shadow-titanium-depth {
+    box-shadow: 
+      0 1px 1px oklch(0 0 0 / 0.05),
+      0 4px 8px oklch(0 0 0 / 0.05),
+      0 12px 24px oklch(0 0 0 / 0.05);
+  }
+
+  /* Spotlight Mouse Effect */
+  .spotlight-hover {
+    background: radial-gradient(
+      circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      oklch(1 0 0 / 0.04) 0%,
+      transparent 70%
+    );
+  }
+
+  /* Active Bar Utility */
+  .active-underline-magic {
+    position: relative;
+  }
+  
+  .active-underline-magic::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 15%;
+    width: 70%;
+    height: 2px;
+    background: var(--titanium-primary);
+    border-radius: 999px;
+    box-shadow: 0 0 8px var(--titanium-primary);
+  }
+}

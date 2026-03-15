@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useMagneticPull } from "../../hooks/useTitaniumMotion";
 
 const fallbackSlides = [
   {
@@ -63,6 +65,8 @@ export default function HeroCarousel({ ads = [], onSlideAction, locationLabel })
     setHeroSrc(slides[activeIndex]?.imageUrl || HERO_IMAGE_FALLBACK);
   }, [activeIndex, slides]);
 
+  const ctaMagnetic = useMagneticPull(0.2);
+
   const goPrev = () => {
     setActiveIndex((prev) => (prev - 1 + slides.length) % slides.length);
   };
@@ -74,14 +78,21 @@ export default function HeroCarousel({ ads = [], onSlideAction, locationLabel })
   const activeSlide = slides[activeIndex];
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-sm dark:border-slate-800" aria-label="Hero promotions">
-      <img
-        src={heroSrc}
-        alt={activeSlide?.title || "Offer banner"}
-        onError={() => setHeroSrc(HERO_IMAGE_FALLBACK)}
-        className="h-64 w-full object-cover md:h-80"
-      />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/35 to-black/20" />
+    <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-xl dark:border-slate-800" aria-label="Hero promotions">
+      <AnimatePresence mode="wait">
+        <motion.img
+          key={activeIndex}
+          initial={{ opacity: 0, scale: 1.05 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          src={heroSrc}
+          alt={activeSlide?.title || "Offer banner"}
+          onError={() => setHeroSrc(HERO_IMAGE_FALLBACK)}
+          className="h-64 w-full object-cover md:h-96"
+        />
+      </AnimatePresence>
+      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
 
       <button
         type="button"
@@ -105,16 +116,36 @@ export default function HeroCarousel({ ads = [], onSlideAction, locationLabel })
         Delivering to {locationLabel || "your area"}
       </div>
 
-      <div className="absolute bottom-4 left-4 right-4 text-white md:bottom-6 md:left-6">
-        <h2 className="max-w-xl text-2xl font-extrabold leading-tight md:text-4xl">{activeSlide?.title}</h2>
-        <p className="mt-2 max-w-xl text-sm text-slate-200 md:text-base">{activeSlide?.subtitle}</p>
-        <button
+      <div className="absolute bottom-6 left-6 right-6 text-white md:bottom-10 md:left-10">
+        <motion.h2 
+          key={`title-${activeIndex}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="max-w-xl text-3xl font-extrabold leading-tight md:text-5xl"
+        >
+          {activeSlide?.title}
+        </motion.h2>
+        <motion.p 
+          key={`sub-${activeIndex}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-3 max-w-xl text-base text-slate-200 md:text-lg"
+        >
+          {activeSlide?.subtitle}
+        </motion.p>
+        <motion.button
+          ref={ctaMagnetic.ref}
+          onMouseMove={ctaMagnetic.handleMouseMove}
+          onMouseLeave={ctaMagnetic.handleMouseLeave}
+          style={{ x: ctaMagnetic.x, y: ctaMagnetic.y }}
           type="button"
           onClick={() => onSlideAction(activeSlide)}
-          className="mt-4 rounded-lg bg-white px-4 py-2 text-sm font-bold text-slate-900 transition hover:bg-slate-100"
+          className="mt-6 inline-flex items-center rounded-lg bg-white px-6 py-3 text-sm font-bold text-slate-900 shadow-lg transition-transform active:scale-95"
         >
           {activeSlide?.ctaText || "Shop now"}
-        </button>
+        </motion.button>
       </div>
 
       <div className="absolute bottom-3 right-4 flex items-center gap-1.5">

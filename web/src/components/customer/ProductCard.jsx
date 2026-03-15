@@ -2,6 +2,8 @@ import { memo, useEffect, useState } from "react";
 import { Heart, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatInr } from "../../utils/formatters";
+import { motion } from "framer-motion";
+import { useTitanium3DTilt, useSpotlightMask } from "../../hooks/useTitaniumMotion";
 
 const IMAGE_FALLBACK =
   "data:image/svg+xml;utf8," +
@@ -44,9 +46,23 @@ const ProductCard = ({
     return () => window.clearTimeout(timer);
   }, [isWishlisted, product.id]);
 
+  const { ref: tiltRef, rotateX, rotateY, onMouseMove, onMouseLeave } = useTitanium3DTilt(10);
+  const spotlightRef = useSpotlightMask();
+
   return (
-    <article className="group marketplace-card h-full rounded-card border border-slate-200 bg-white p-3.5 shadow-card transition duration-200 hover:-translate-y-1 hover:shadow-card-hover dark:border-slate-800 dark:bg-slate-900">
-      <div className="relative">
+    <motion.article
+      ref={tiltRef}
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
+      style={{ rotateX, rotateY, perspective: 1000 }}
+      className="group marketplace-card relative h-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-3.5 shadow-card transition-colors duration-300 hover:border-brand-300/50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-brand-500/50"
+    >
+      <div 
+        ref={spotlightRef}
+        className="spotlight-hover absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-500 group-hover:opacity-100" 
+      />
+      
+      <div className="relative z-10">
         <Link
           to={`/product/${product.id}`}
           className="block aspect-[4/5] overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-950"
@@ -63,7 +79,7 @@ const ProductCard = ({
               }
               setIsImageLoaded(true);
             }}
-            className={`h-full w-full object-cover transition duration-300 group-hover:scale-[1.02] ${isImageLoaded ? "block" : "hidden"}`}
+            className={`h-full w-full object-cover transition duration-500 group-hover:scale-[1.05] ${isImageLoaded ? "block" : "hidden"}`}
           />
         </Link>
 
@@ -116,20 +132,20 @@ const ProductCard = ({
             type="button"
             onClick={() => onAddToCart(product)}
             disabled={isAddingCart}
-            className="w-full rounded-lg bg-brand-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-70"
+            className="animate-titanium-shimmer relative overflow-hidden w-full rounded-lg bg-brand-600 px-3 py-2.5 text-sm font-bold text-white shadow-[0_4px_12px_rgba(37,99,235,0.25)] transition-all hover:bg-brand-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isAddingCart ? "Adding..." : "Add to Cart"}
           </button>
           <button
             type="button"
             onClick={() => onBuyNow(product)}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="w-full rounded-lg border border-slate-200 bg-white-hover px-3 py-2 text-sm font-semibold text-slate-700 transition-all hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-200 dark:hover:border-slate-700"
           >
             Buy Now
           </button>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 };
 
