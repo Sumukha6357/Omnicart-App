@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { updateUsername, updatePassword } from "../api/userApi";
+import { updateUsername, initiatePasswordReset } from "../api/userApi";
 import { updateName, logout } from "../redux/userSlice";
 import { ThemeContext } from "../context/ThemeContext";
 import { ToastContext } from "../context/ToastContext";
@@ -10,8 +10,7 @@ import { LogOut, UserCircle2, ShieldCheck } from "lucide-react";
 export default function Profile({ onClose }) {
   const { user, token } = useSelector((state) => state.user);
   const [name, setName] = useState(user?.name || "");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState(user?.email || "");
   const [loadingName, setLoadingName] = useState(false);
   const [loadingPassword, setLoadingPassword] = useState(false);
   const navigate = useNavigate();
@@ -33,15 +32,15 @@ export default function Profile({ onClose }) {
     }
   };
 
-  const handleChangePassword = async () => {
-    if (!password) return;
+  const handleInitiatePasswordReset = async () => {
+    if (!email) return;
     setLoadingPassword(true);
     try {
-      await updatePassword(user.id, password, token);
-      showToast("Password updated.", "success");
-      setPassword("");
+      await initiatePasswordReset(email);
+      showToast("Password reset link sent to your email.", "success");
+      setEmail("");
     } catch {
-      showToast("Failed to update password.", "error");
+      showToast("Failed to send reset link.", "error");
     } finally {
       setLoadingPassword(false);
     }
@@ -110,19 +109,18 @@ export default function Profile({ onClose }) {
         </div>
 
         <div className="mb-4">
-          <label className="mb-1 block font-semibold text-slate-700 dark:text-slate-200">Password</label>
-          <input
-            type={showPassword ? "text" : "password"}
-            className="w-full rounded-lg border px-3 py-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button onClick={() => setShowPassword((v) => !v)} className="mt-1 text-sm text-blue-600 dark:text-blue-400">
-            {showPassword ? "Hide" : "Show"} password
-          </button>
-          <button onClick={handleChangePassword} disabled={loadingPassword} className="primary-cta mt-2 w-full">
-            {loadingPassword ? "Updating" : "Change Password"}
-          </button>
+          <label className="mb-1 block font-semibold text-slate-700 dark:text-slate-200">Email for Password Reset</label>
+          <div className="flex gap-2">
+            <input
+              type="email"
+              className="w-full rounded-lg border px-3 py-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <button onClick={handleInitiatePasswordReset} disabled={loadingPassword} className="primary-cta">
+              {loadingPassword ? "Sending..." : "Send Reset Link"}
+            </button>
+          </div>
         </div>
 
         {user?.role?.toLowerCase() === "customer" && (

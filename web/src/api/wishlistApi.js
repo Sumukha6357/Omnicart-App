@@ -1,51 +1,30 @@
-import { fetchProductById } from './productApi'
+import api from "./axios";
 
-const keyForUser = (userId) => `omnicart_wishlist_${String(userId || 'guest')}`
-
-const readWishlist = (userId) => {
-  try {
-    const raw = localStorage.getItem(keyForUser(userId))
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
+const getAuthHeaders = (token) => {
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
-}
+  return headers;
+};
 
-const writeWishlist = (userId, items) => {
-  localStorage.setItem(keyForUser(userId), JSON.stringify(items))
-}
+export const addToWishlist = async (userId, productId, token) => {
+  const response = await api.post(`/api/wishlist/${userId}`, { productId }, {
+    headers: getAuthHeaders(token),
+  });
+  return response.data?.data || response.data;
+};
 
-export const addToWishlist = async (userId, productId) => {
-  const id = String(productId)
-  const items = readWishlist(userId)
-  if (items.some((i) => String(i.productId) === id)) {
-    return { success: true, items }
-  }
+export const removeFromWishlist = async (userId, productId, token) => {
+  const response = await api.delete(`/api/wishlist/${userId}/${productId}`, {
+    headers: getAuthHeaders(token),
+  });
+  return response.data?.data || response.data;
+};
 
-  let product = null
-  try {
-    product = await fetchProductById(id)
-  } catch {
-    product = null
-  }
-
-  items.push({
-    productId: id,
-    name: product?.name || 'Product',
-    price: Number(product?.price || 0),
-    imageUrl: product?.imageUrl || '',
-  })
-
-  writeWishlist(userId, items)
-  return { success: true, items }
-}
-
-export const removeFromWishlist = async (userId, productId) => {
-  const items = readWishlist(userId).filter((i) => String(i.productId) !== String(productId))
-  writeWishlist(userId, items)
-  return { success: true, items }
-}
-
-export const getWishlist = async (userId) => {
-  return readWishlist(userId)
-}
+export const getWishlist = async (userId, token) => {
+  const response = await api.get(`/api/wishlist/${userId}`, {
+    headers: getAuthHeaders(token),
+  });
+  return response.data?.data || response.data;
+};

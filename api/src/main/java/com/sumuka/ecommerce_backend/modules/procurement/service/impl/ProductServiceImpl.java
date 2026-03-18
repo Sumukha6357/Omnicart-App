@@ -63,17 +63,19 @@ public class ProductServiceImpl implements ProductService {
                 .build();
 
         Product saved = productRepo.save(product);
-        return productMapper.toDto(saved);
+        ProductResponse response = productMapper.toDto(saved);
+        response.setRating(0.0);
+        response.setPopularity(0L);
+        response.setBrand(null);
+        return response;
     }
 
     @Override
     @Transactional
     @Cacheable(value = "allProductsCache", key = "'all'")
     public List<ProductResponse> getAllProducts() {
-        return productRepo.findAll()
-                .stream()
-                .map(productMapper::toDto)
-                .collect(Collectors.toList());
+        List<Product> products = productRepo.findAll();
+        return applyRatingAndSort(products, null, null);
     }
 
     @Override
@@ -95,10 +97,8 @@ public class ProductServiceImpl implements ProductService {
         User seller = userRepo.findById(sellerId)
                 .orElseThrow(() -> new RuntimeException("Seller not found"));
 
-        return productRepo.findBySeller(seller)
-                .stream()
-                .map(productMapper::toDto)
-                .collect(Collectors.toList());
+        List<Product> products = productRepo.findBySeller(seller);
+        return applyRatingAndSort(products, null, null);
     }
 
     @Override
@@ -150,7 +150,20 @@ public class ProductServiceImpl implements ProductService {
                 }
             }
         }
-        return productMapper.toDto(saved);
+        ProductResponse response = productMapper.toDto(saved);
+        // Calculate rating and popularity for updated product
+        Map<UUID, Double> avgRatingMap = new HashMap<>();
+        for (Object[] row : reviewRepo.findAverageRatingsByProductIds(List.of(saved.getId()))) {
+            avgRatingMap.put((UUID) row[0], row[1] != null ? ((Number) row[1]).doubleValue() : 0.0);
+        }
+        Map<UUID, Long> popularityMap = new HashMap<>();
+        for (Object[] row : orderItemRepo.findPopularityByProductIds(List.of(saved.getId()))) {
+            popularityMap.put((UUID) row[0], row[1] != null ? ((Number) row[1]).longValue() : 0L);
+        }
+        response.setRating(avgRatingMap.getOrDefault(saved.getId(), 0.0));
+        response.setPopularity(popularityMap.getOrDefault(saved.getId(), 0L));
+        response.setBrand(null);
+        return response;
     }
 
     @Override
@@ -164,7 +177,23 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse getProductById(UUID productId) {
         Product product = productRepo.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
-        return productMapper.toDto(product);
+        ProductResponse response = productMapper.toDto(product);
+        
+        // Calculate rating and popularity for single product
+        Map<UUID, Double> avgRatingMap = new HashMap<>();
+        for (Object[] row : reviewRepo.findAverageRatingsByProductIds(List.of(productId))) {
+            avgRatingMap.put((UUID) row[0], row[1] != null ? ((Number) row[1]).doubleValue() : 0.0);
+        }
+        Map<UUID, Long> popularityMap = new HashMap<>();
+        for (Object[] row : orderItemRepo.findPopularityByProductIds(List.of(productId))) {
+            popularityMap.put((UUID) row[0], row[1] != null ? ((Number) row[1]).longValue() : 0L);
+        }
+        
+        response.setRating(avgRatingMap.getOrDefault(productId, 0.0));
+        response.setPopularity(popularityMap.getOrDefault(productId, 0L));
+        response.setBrand(null);
+        
+        return response;
     }
 
     private Specification<Product> buildSpec(String search,
@@ -260,7 +289,15 @@ public class ProductServiceImpl implements ProductService {
             filtered = filtered.stream().sorted(comparator).collect(Collectors.toList());
         }
 
-        return filtered.stream().map(productMapper::toDto).collect(Collectors.toList());
+        return filtered.stream()
+                .map(p -> {
+                    ProductResponse response = productMapper.toDto(p);
+                    response.setRating(avgRatingMap.getOrDefault(p.getId(), 0.0));
+                    response.setPopularity(popularityMap.getOrDefault(p.getId(), 0L));
+                    response.setBrand(null); // Brand not available in entity
+                    return response;
+                })
+                .collect(Collectors.toList());
     }
 
 }

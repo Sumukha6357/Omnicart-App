@@ -1,12 +1,14 @@
 // redux/wishlistSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { getWishlist, addToWishlist } from "../api/wishlistApi";
+import { getToken } from "../utils/authUtils";
 
 export const fetchWishlist = createAsyncThunk("wishlist/fetchWishlist", async (userId) => {
+  const token = getToken();
   let serverItems = [];
   try {
-    serverItems = await getWishlist(userId);
-  } catch (e) {
+    serverItems = await getWishlist(userId, token);
+  } catch {
     serverItems = [];
   }
   return serverItems;
@@ -14,8 +16,9 @@ export const fetchWishlist = createAsyncThunk("wishlist/fetchWishlist", async (u
 
 export const addWishlistItem = createAsyncThunk(
   "wishlist/addItem",
-  async ({ userId, productId }, { dispatch, getState }) => {
-    await addToWishlist(userId, productId);
+  async ({ userId, productId }, { dispatch }) => {
+    const token = getToken();
+    await addToWishlist(userId, productId, token);
     dispatch(fetchWishlist(userId));
   }
 );

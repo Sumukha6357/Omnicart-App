@@ -1,119 +1,81 @@
-import { filterAndSortProducts } from "./dummyProductUtils";
+import api from "./axios";
 
-const DUMMY_PRODUCTS_URL = "https://dummyjson.com/products?limit=200";
-const CUSTOM_PRODUCTS_KEY = "omnicart_custom_products";
-const DELETED_PRODUCTS_KEY = "omnicart_deleted_product_ids";
-
-const normalizeReviews = (reviews) => {
-  if (!Array.isArray(reviews)) return [];
-  return reviews.map((review, index) => ({
-    id: review.id ?? `review-${index}`,
-    name: review.name ?? review.reviewerName ?? "Verified Buyer",
-    text: review.text ?? review.comment ?? "",
-    rating: Number(review.rating ?? 0),
-    date: review.date ?? null,
-  }));
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  if (role) {
+    headers["X-User-Role"] = role;
+  }
+  return headers;
 };
 
+// Map backend product response to frontend format
 const toUiProduct = (p) => ({
   id: String(p.id),
-  name: p.name ?? p.title ?? "Unnamed Product",
+  name: p.name ?? "Unnamed Product",
   description: p.description ?? "",
   price: Number(p.price ?? 0),
-  quantity: Number(p.quantity ?? p.stock ?? 0),
-  rating: Number(p.rating ?? 0),
-  categoryName: p.categoryName ?? p.category ?? "Uncategorized",
-  imageUrl: p.imageUrl ?? p.thumbnail ?? p.images?.[0] ?? "",
-  sellerId: p.sellerId ?? `dummy-seller-${(Number(p.id) % 3) + 1}`,
-  sellerName: p.sellerName ?? "Dummy Seller",
-  brand: p.brand ?? "",
-  reviews: normalizeReviews(p.reviews),
+  quantity: Number(p.quantity ?? 0),
+  rating: Number(p.rating ?? 0), // Backend doesn't provide this yet
+  categoryName: p.categoryName ?? "Uncategorized",
+  imageUrl: p.imageUrl ?? "",
+  sellerId: p.sellerId ?? null, // Backend doesn't provide this yet
+  sellerName: p.sellerName ?? "Unknown Seller",
+  brand: p.brand ?? "", // Backend doesn't provide this yet
+  reviews: Array.isArray(p.reviews) ? p.reviews : [], // Backend doesn't provide this yet
   createdAt: p.createdAt ?? new Date().toISOString(),
-  popularity: Number(p.popularity ?? p.rating ?? 0),
+  popularity: Number(p.popularity ?? 0), // Backend doesn't provide this yet
 });
 
-const readJson = (key, fallback) => {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
-};
-
-const writeJson = (key, value) => {
-  localStorage.setItem(key, JSON.stringify(value));
-};
-
-const loadBaseProducts = async () => {
-  const res = await fetch(DUMMY_PRODUCTS_URL);
-  if (!res.ok) throw new Error("Failed to fetch dummy products");
-  const payload = await res.json();
-  const products = Array.isArray(payload?.products) ? payload.products : [];
-  return products.map(toUiProduct);
-};
-
-const loadMergedProducts = async () => {
-  const base = await loadBaseProducts();
-  const custom = readJson(CUSTOM_PRODUCTS_KEY, []).map(toUiProduct);
-  const deletedIds = new Set(readJson(DELETED_PRODUCTS_KEY, []).map(String));
-  const customById = new Map(custom.map((p) => [String(p.id), p]));
-
-  const merged = base.map((p) => customById.get(String(p.id)) ?? p);
-  const localOnly = custom.filter((p) => !base.some((b) => String(b.id) === String(p.id)));
-
-  return [...merged, ...localOnly].filter((p) => !deletedIds.has(String(p.id)));
-};
-
 export const fetchAllProducts = async (params = {}) => {
-  const products = await loadMergedProducts();
-  return filterAndSortProducts(products, params);
+  const response = await api.get("/api/products", {
+    headers: getAuthHeaders(),
+    params,
+  });
+  const data = response.data?.data || response.data;
+  return Array.isArray(data) ? data.map(toUiProduct) : [];
 };
 
 export const fetchProductById = async (productId) => {
-  const products = await loadMergedProducts();
-  return products.find((p) => String(p.id) === String(productId)) || null;
+  const response = await api.get(`/api/products/${productId}`, {
+    headers: getAuthHeaders(),
+  });
+  const data = response.data?.data || response.data;
+  return toUiProduct(data);
 };
 
 export const createProduct = async (productData) => {
-  const custom = readJson(CUSTOM_PRODUCTS_KEY, []);
-  const created = toUiProduct({
-    ...productData,
-    id: `local-${Date.now()}`,
-    categoryName: productData.categoryName ?? productData.category ?? "Uncategorized",
+  const response = await api.post("/api/products", productData, {
+    headers: getAuthHeaders(),
   });
-  custom.push(created);
-  writeJson(CUSTOM_PRODUCTS_KEY, custom);
-  return created;
+  const data = response.data?.data || response.data;
+  return toUiProduct(data);
 };
 
 export const updateProduct = async (productId, productData) => {
-  const custom = readJson(CUSTOM_PRODUCTS_KEY, []);
-  const idx = custom.findIndex((p) => String(p.id) === String(productId));
-  const updated = toUiProduct({ ...productData, id: productId });
-
-  if (idx >= 0) {
-    custom[idx] = updated;
-  } else {
-    custom.push(updated);
-  }
-
-  writeJson(CUSTOM_PRODUCTS_KEY, custom);
-  return updated;
+  const response = await api.put(`/api/products/${productId}`, productData, {
+    headers: getAuthHeaders(),
+  });
+  const data = response.data?.data || response.data;
+  return toUiProduct(data);
 };
 
 export const deleteProductById = async (productId) => {
-  const custom = readJson(CUSTOM_PRODUCTS_KEY, []).filter((p) => String(p.id) !== String(productId));
-  const deleted = new Set(readJson(DELETED_PRODUCTS_KEY, []).map(String));
-  deleted.add(String(productId));
-  writeJson(CUSTOM_PRODUCTS_KEY, custom);
-  writeJson(DELETED_PRODUCTS_KEY, Array.from(deleted));
-  return { success: true, id: String(productId) };
+  const response = await api.delete(`/api/products/${productId}`, {
+    headers: getAuthHeaders(),
+  });
+  return { success: response.status === 204, id: String(productId) };
 };
 
 export const fetchProductsBySeller = async (sellerId, params = {}) => {
-  const products = await loadMergedProducts();
-  const matches = products.filter((p) => String(p.sellerId) === String(sellerId));
-  const base = matches.length > 0 ? matches : products;
-  return filterAndSortProducts(base, params);
+  const response = await api.get(`/api/products/seller/${sellerId}`, {
+    headers: getAuthHeaders(),
+    params,
+  });
+  const data = response.data?.data || response.data;
+  return Array.isArray(data) ? data.map(toUiProduct) : [];
 };

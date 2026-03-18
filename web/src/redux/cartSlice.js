@@ -7,22 +7,22 @@ const initialState = {
   error: null,
 }
 
-export const fetchCart = createAsyncThunk("cart/fetch", async ({ userId }, thunkAPI) => {
+export const fetchCart = createAsyncThunk("cart/fetch", async ({ userId }) => {
   const token = getToken()
   try {
     const response = await getCart(userId, token)
     return { items: (response && response.items) ? response.items : [] }
-  } catch (e) {
+  } catch {
     return { items: [] }
   }
 })
 
-export const addItem = createAsyncThunk("cart/add", async ({ userId, productId, quantity }, thunkAPI) => {
+export const addItem = createAsyncThunk("cart/add", async ({ userId, productId, quantity }) => {
   const token = getToken()
   return await addToCart(userId, { productId, quantity }, token)
 })
 
-export const removeItem = createAsyncThunk("cart/remove", async ({ userId, productId }, thunkAPI) => {
+export const removeItem = createAsyncThunk("cart/remove", async ({ userId, productId }) => {
   const token = getToken()
   return await removeFromCart(userId, productId, token)
 })

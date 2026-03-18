@@ -1,27 +1,47 @@
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap");
 
+@import "./styles/titanium-core.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import "./styles/titanium-core.css";
-
 @layer base {
   :root {
-    --bg-page: var(--titanium-bg);
-    --bg-surface: var(--titanium-surface-1);
-    --border-soft: var(--titanium-border);
-    --text-default: oklch(0.2 0.01 250);
-    --text-muted: oklch(0.5 0.02 250);
+    /* Fluid Consumer - Masterwork Light Palette */
+    --bg-page: oklch(0.99 0.005 0);
+    --bg-surface: oklch(0.97 0.01 0);
+    --bg-card: oklch(1 0 0);
+    
+    --brand-primary: oklch(0.62 0.22 28); /* Hyper Orange-Red */
+    --brand-secondary: oklch(0.65 0.2 45); /* Warm Sunrise */
+    --brand-accent: oklch(0.7 0.18 145); /* Fresh Mint */
+    
+    --text-default: oklch(0.25 0.02 0);
+    --text-muted: oklch(0.45 0.02 0);
+    
+    --border-soft: oklch(0.92 0.01 0);
+    --border-strong: oklch(0.85 0.02 0);
   }
 
   .dark {
-    --text-default: oklch(0.9 0.01 250);
-    --text-muted: oklch(0.7 0.02 250);
+    /* Fluid Consumer - Masterwork Dark Palette */
+    --bg-page: oklch(0.12 0.01 20);
+    --bg-surface: oklch(0.16 0.01 20);
+    --bg-card: oklch(0.18 0.02 20);
+    
+    --brand-primary: oklch(0.68 0.22 35);
+    --brand-secondary: oklch(0.72 0.2 55);
+    
+    --text-default: oklch(0.95 0.01 0);
+    --text-muted: oklch(0.75 0.02 0);
+    
+    --border-soft: oklch(0.25 0.02 20);
+    --border-strong: oklch(0.35 0.03 20);
   }
 
   * {
-    @apply border-slate-200;
+    @apply border-border-soft transition-colors duration-300;
   }
 
   body {
@@ -29,73 +49,64 @@
     color: var(--text-default);
     background: var(--bg-page);
     min-height: 100vh;
-    color-scheme: light;
-  }
-
-  .dark body {
-    color-scheme: dark;
+    -webkit-font-smoothing: antialiased;
+    background-image: 
+      radial-gradient(at 0% 0%, oklch(var(--brand-primary) / 0.03) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, oklch(var(--brand-secondary) / 0.03) 0px, transparent 50%);
   }
 
   h1, h2, h3, h4 {
     font-family: "Plus Jakarta Sans", sans-serif;
+    letter-spacing: -0.04em;
+    font-weight: 800;
   }
 }
 
 .dashboard-card {
-  @apply p-6 rounded-xl border bg-white/90 backdrop-blur shadow-sm hover:shadow-lg text-xl font-semibold text-slate-800 hover:text-blue-700 transition;
+  @apply rounded-bento border bg-bg-surface p-8 shadow-card transition-all duration-300 hover:animate-haptic-pop hover:shadow-card-hover;
 }
 
 .marketplace-panel {
-  @apply rounded-2xl border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/90;
+  @apply rounded-bento border bg-white shadow-sm dark:bg-bg-surface;
 }
 
 .marketplace-card {
-  @apply rounded-2xl border border-slate-200 bg-white shadow-titanium-depth transition-all duration-300 dark:border-slate-800 dark:bg-slate-900;
-}
-
-.marketplace-chip {
-  @apply inline-flex items-center rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300;
+  @apply relative overflow-hidden rounded-card border bg-bg-card shadow-titanium-depth transition-all duration-500 hover:animate-float-parallax hover:shadow-card-hover;
 }
 
 .primary-cta {
-  @apply rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700;
+  background: linear-gradient(
+    90deg,
+    transparent 25%,
+    oklch(1 0 0 / 0.08) 50%,
+    transparent 75%
+  );
+  background-size: 200% 100%;
+  animation: titanium-shimmer 3s infinite linear;
+  @apply relative overflow-hidden rounded-full bg-brand-primary px-6 py-3 text-sm font-black text-white shadow-brand-primary transition-all hover:scale-[1.02] active:scale-95;
+}
+
+@keyframes titanium-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
 }
 
 .accent-cta {
-  @apply rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:from-orange-600 hover:to-amber-600;
+  @apply rounded-full bg-gradient-to-br from-brand-secondary to-brand-primary px-6 py-3 text-sm font-black text-white shadow-brand-primary transition-all active:scale-95;
 }
 
-.lift-card {
-  @apply transition-all duration-500 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-brand-500/10;
+.glass-bento {
+  @apply border border-white/20 bg-white/40 backdrop-blur-xl dark:border-white/5 dark:bg-black/40;
 }
 
 .toast-enter {
-  animation: toast-in 220ms ease-out;
-}
-
-.heart-pop {
-  animation: heart-pop 260ms ease-out;
-}
-
-@keyframes heart-pop {
-  0% {
-    transform: scale(0.8);
-    opacity: 0.7;
-  }
-  55% {
-    transform: scale(1.2);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  animation: toast-in 220ms cubic-bezier(0.175, 0.885, 0.32, 1.2);
 }
 
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(-8px) scale(0.98);
+    transform: translateY(12px) scale(0.95);
   }
   to {
     opacity: 1;

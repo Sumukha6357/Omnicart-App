@@ -1,4 +1,4 @@
-// src/api/adminApi.js
+// src/api/userApi.js
 import api from './axios';
 
 const ADMIN = '/api/admin';
@@ -26,9 +26,10 @@ export const updateUsername = async (userId, newUsername) => {
   return res.data;
 };
 
-// ✅ Update Password
-export const updatePassword = async (userId, newPassword) => {
-  const res = await api.put(`${USER}/${userId}/password`, { password: newPassword }, authHeader());
+// ✅ Initiate Password Reset (sends reset link to email)
+export const initiatePasswordReset = async (email) => {
+  // Backend expects email as query parameter
+  const res = await api.put(`${USER}/password?email=${encodeURIComponent(email)}`, {}, authHeader());
   return res.data;
 };
 

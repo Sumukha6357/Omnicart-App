@@ -10,5 +10,6 @@ public interface ProductMapper {
 
     @Mapping(source = "seller.name", target = "sellerName")
     @Mapping(source = "category.name", target = "categoryName")
+    @Mapping(source = "createdAt", target = "createdAt")
     ProductResponse toDto(Product product);
 }
