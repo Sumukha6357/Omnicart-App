@@ -22,7 +22,8 @@ const ProductCard = ({
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [imgSrc, setImgSrc] = useState(product.imageUrl || IMAGE_FALLBACK);
   const ratingValue = Number(product?.rating || 0);
-  const reviewCount = Array.isArray(product?.reviews) ? product.reviews.length : 0;
+  // Reviews are fetched separately via reviewApi, not included in product response
+  const reviewCount = 0; // Placeholder - should be fetched separately if needed
 
   useEffect(() => {
     setImgSrc(product.imageUrl || IMAGE_FALLBACK);

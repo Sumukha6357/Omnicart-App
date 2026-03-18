@@ -8,6 +8,7 @@ import { Heart, Star } from "lucide-react";
 import Breadcrumbs from "../../../components/Breadcrumbs";
 import { ToastContext } from "../../../context/ToastContext";
 import { getRoleHomePath } from "../../../utils/navigation";
+import { fetchReviewsByProduct } from "../../../api/reviewApi";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -18,6 +19,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [imgSrc, setImgSrc] = useState("");
+  const [reviews, setReviews] = useState([]);
   const { showToast } = useContext(ToastContext);
 
   useEffect(() => {
@@ -55,6 +57,20 @@ export default function ProductDetail() {
       dispatch(getAllProducts({ category: productToShow.categoryName }));
     }
   }, [id, productToShow?.categoryName, products, dispatch]);
+
+  useEffect(() => {
+    if (!productToShow?.id) return;
+    const loadReviews = async () => {
+      try {
+        const reviewData = await fetchReviewsByProduct(productToShow.id);
+        setReviews(Array.isArray(reviewData) ? reviewData : []);
+      } catch (error) {
+        console.error("Failed to load reviews:", error);
+        setReviews([]);
+      }
+    };
+    loadReviews();
+  }, [productToShow?.id]);
 
   if (loading || !productToShow) {
     return <p className="mt-10 text-center text-slate-600 dark:text-slate-300">Loading product...</p>;
@@ -114,7 +130,7 @@ export default function ProductDetail() {
       return p.categoryName.toLowerCase() === categoryName.toLowerCase();
     })
     .slice(0, 6);
-  const reviewsToShow = Array.isArray(productToShow?.reviews) ? productToShow.reviews : [];
+  const reviewsToShow = reviews;
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-8 dark:bg-slate-950 sm:px-6 lg:px-8">
@@ -239,39 +255,17 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          <div className="marketplace-panel p-6">
-            <h2 className="mb-4 text-lg font-bold">Specifications</h2>
-            <div className="grid grid-cols-2 gap-4 text-sm text-gray-700 dark:text-slate-300">
-              <div>
-                <div className="font-semibold">Brand</div>
-                <div>{productToShow.brand || "N/A"}</div>
-              </div>
-              <div>
-                <div className="font-semibold">Warranty</div>
-                <div>{productToShow.warranty || "N/A"}</div>
-              </div>
-              <div>
-                <div className="font-semibold">Material</div>
-                <div>{productToShow.material || productToShow.ingredients || "N/A"}</div>
-              </div>
-              <div>
-                <div className="font-semibold">Origin</div>
-                <div>{productToShow.origin || "N/A"}</div>
-              </div>
-              {productToShow.connectivity && (
+          {productToShow.brand && (
+            <div className="marketplace-panel p-6">
+              <h2 className="mb-4 text-lg font-bold">Specifications</h2>
+              <div className="grid grid-cols-2 gap-4 text-sm text-gray-700 dark:text-slate-300">
                 <div>
-                  <div className="font-semibold">Connectivity</div>
-                  <div>{productToShow.connectivity}</div>
+                  <div className="font-semibold">Brand</div>
+                  <div>{productToShow.brand}</div>
                 </div>
-              )}
-              {productToShow.power && (
-                <div>
-                  <div className="font-semibold">Power</div>
-                  <div>{productToShow.power}</div>
-                </div>
-              )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
