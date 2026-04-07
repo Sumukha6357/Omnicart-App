@@ -1,0 +1,8 @@
+{
+  "name": "omnicart",
+  "version": "1.0.0",
+  "description": "Seeder wrapper for Omnicart",
+  "scripts": {
+    "seed": "docker compose exec -T db psql -U sumuka -d omnicart_db -f /scripts/seed.sql"
+  }
+}
